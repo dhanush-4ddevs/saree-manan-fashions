@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./styles/globals.css";
 import FirebaseInitializer from "./components/shared/FirebaseInitializer";
+import { Analytics } from "@vercel/analytics/next"
 
 
 const inter = Inter({
@@ -34,6 +35,7 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-blue-50/80`}
       >
         <FirebaseInitializer />
+        <Analytics/>
         {children}
       </body>
     </html>
