@@ -1,0 +1,476 @@
+'use client';
+
+import { db } from '@/config/firebase';
+import { collection, addDoc, serverTimestamp, getDocs, query, where, orderBy, limit, doc, getDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+
+/**
+ * Improved notification service to handle notifications with proper indexing
+ */
+export const notificationService = {
+  /**
+   * Create a notification (unified for admin and vendor)
+   * @param userId - The user ID to send notification to
+   * @param title - Notification title
+   * @param message - Notification message
+   * @param voucherNo - Voucher number for grouping
+   * @param eventType - Event type (dispatch, receive, forward, payment, etc.)
+   * @param eventId - Event ID (if applicable)
+   * @param groupKey - Grouping key (defaults to voucherNo)
+   * @param extra - Any extra fields (e.g., amountPaid)
+   * @returns The created notification ID
+   */
+  async createNotification({
+    userId,
+    title,
+    message,
+    voucherNo,
+    eventType,
+    eventId,
+    groupKey,
+    extra = {}
+  }: {
+    userId: string;
+    title: string;
+    message: string;
+    voucherNo?: string;
+    eventType?: string;
+    eventId?: string;
+    groupKey?: string;
+    extra?: Record<string, any>;
+  }): Promise<string> {
+    try {
+      const notificationData: any = {
+        userId,
+        title,
+        message,
+        read: false,
+        voucherNo,
+        eventType,
+        eventId,
+        groupKey: groupKey || voucherNo,
+        createdAt: serverTimestamp(),
+        ...extra
+      };
+      const notificationRef = await addDoc(collection(db, 'notifications'), notificationData);
+      console.log('Notification created with ID:', notificationRef.id);
+      return notificationRef.id;
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a single notification
+   * @param notificationId - The notification ID to delete
+   * @returns True if deleted successfully, false otherwise
+   */
+  async deleteNotification(notificationId: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, 'notifications', notificationId));
+      console.log('Notification deleted with ID:', notificationId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Delete all notifications for a user
+   * @param userId - The user ID whose notifications to delete
+   * @returns True if deleted successfully, false otherwise
+   */
+  async deleteAllNotifications(userId: string): Promise<boolean> {
+    try {
+      const notificationsRef = collection(db, 'notifications');
+      const q = query(notificationsRef, where('userId', '==', userId));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        console.log('No notifications found for user:', userId);
+        return true;
+      }
+
+      const batch = writeBatch(db);
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Deleted ${snapshot.size} notifications for user:`, userId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting all notifications:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Delete a single vendor notification
+   * @param notificationId - The vendor notification ID to delete
+   * @returns True if deleted successfully, false otherwise
+   */
+  async deleteVendorNotification(notificationId: string): Promise<boolean> {
+    try {
+      await deleteDoc(doc(db, 'vendorNotifications', notificationId));
+      console.log('Vendor notification deleted with ID:', notificationId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting vendor notification:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Delete all vendor notifications for a user
+   * @param vendorUserId - The vendor user ID whose notifications to delete
+   * @returns True if deleted successfully, false otherwise
+   */
+  async deleteAllVendorNotifications(vendorUserId: string): Promise<boolean> {
+    try {
+      const vendorNotificationsRef = collection(db, 'vendorNotifications');
+      const q = query(vendorNotificationsRef, where('vendorUserId', '==', vendorUserId));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        console.log('No vendor notifications found for user:', vendorUserId);
+        return true;
+      }
+
+      const batch = writeBatch(db);
+      snapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+
+      await batch.commit();
+      console.log(`Deleted ${snapshot.size} vendor notifications for user:`, vendorUserId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting all vendor notifications:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Get user by email or code
+   * @param email - User email
+   * @param userCode - User code
+   * @returns The user document or null if not found
+   */
+  async getUserByEmailOrCode(email?: string, userCode?: string): Promise<{ id: string, data: any } | null> {
+    try {
+      if (!email && !userCode) {
+        console.log('No email or userCode provided to getUserByEmailOrCode');
+        return null;
+      }
+
+      console.log(`Searching for user with email: "${email}" or userCode: "${userCode}"`);
+
+      const usersRef = collection(db, 'users');
+      let userQuery;
+
+      if (email) {
+        userQuery = query(usersRef, where('email', '==', email), limit(1));
+      } else {
+        userQuery = query(usersRef, where('userCode', '==', userCode), limit(1));
+      }
+
+      const userSnapshot = await getDocs(userQuery);
+
+      if (userSnapshot.empty) {
+        console.log('No user found with the provided email or userCode');
+        return null;
+      }
+
+      const userDoc = userSnapshot.docs[0];
+      const userData = userDoc.data();
+      console.log('Found user:', { id: userDoc.id, data: userData });
+      return { id: userDoc.id, data: userData };
+    } catch (error) {
+      console.error('Error getting user by email or code:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Send event-based notifications (to receiver and admin)
+   */
+  async sendEventNotifications({
+    voucherNo,
+    eventType,
+    eventId,
+    receiverId,
+    adminId,
+    itemName,
+    quantity
+  }: {
+    voucherNo: string;
+    eventType: string;
+    eventId: string;
+    receiverId?: string;
+    adminId: string;
+    itemName?: string;
+    quantity?: number;
+  }) {
+    const notifications = [];
+    const eventLabel = eventType.charAt(0).toUpperCase() + eventType.slice(1);
+
+    // Notify receiver (vendor or user)
+    if (receiverId) {
+      // Check if receiver is a vendor by looking up their user data
+      try {
+        const receiverDoc = await getDoc(doc(db, 'users', receiverId));
+        if (receiverDoc.exists()) {
+          const receiverData = receiverDoc.data();
+          const isVendor = receiverData.role === 'vendor';
+
+          if (isVendor) {
+            // Use vendor notification for vendors
+            notifications.push(
+              this.createVendorNotification({
+                vendorUserId: receiverId,
+                title: `${eventLabel} Event for Voucher ${voucherNo}`,
+                message: `You are the receiver for voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${quantity ? `, Qty: ${quantity}` : ''}.`,
+                voucherNo,
+                voucherId: eventId,
+                type: 'voucher_assignment'
+              })
+            );
+          } else {
+            // Use regular notification for admins
+            notifications.push(
+              this.createNotification({
+                userId: receiverId,
+                title: `${eventLabel} Event for Voucher ${voucherNo}`,
+                message: `You are the receiver for voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${quantity ? `, Qty: ${quantity}` : ''}.`,
+                voucherNo,
+                eventType,
+                eventId
+              })
+            );
+          }
+        } else {
+          // Fallback to regular notification if user not found
+          notifications.push(
+            this.createNotification({
+              userId: receiverId,
+              title: `${eventLabel} Event for Voucher ${voucherNo}`,
+              message: `You are the receiver for voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${quantity ? `, Qty: ${quantity}` : ''}.`,
+              voucherNo,
+              eventType,
+              eventId
+            })
+          );
+        }
+      } catch (error) {
+        console.error('Error checking user role for notification:', error);
+        // Fallback to regular notification
+        notifications.push(
+          this.createNotification({
+            userId: receiverId,
+            title: `${eventLabel} Event for Voucher ${voucherNo}`,
+            message: `You are the receiver for voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${quantity ? `, Qty: ${quantity}` : ''}.`,
+            voucherNo,
+            eventType,
+            eventId
+          })
+        );
+      }
+    }
+
+    // Notify admin (voucher creator) - but NOT for dispatch events
+    if (adminId && eventType !== 'dispatch') {
+      notifications.push(
+        this.createNotification({
+          userId: adminId,
+          title: `${eventLabel} Event for Voucher ${voucherNo}`,
+          message: `A ${eventType} event occurred for voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${quantity ? `, Qty: ${quantity}` : ''}.`,
+          voucherNo,
+          eventType,
+          eventId
+        })
+      );
+    }
+    await Promise.all(notifications);
+  },
+
+  /**
+   * Send payment notification to vendor
+   */
+  async sendPaymentNotification({
+    vendorUserId,
+    paymentAmount,
+    voucherNo,
+    voucherId,
+    workDescription
+  }: {
+    vendorUserId: string;
+    paymentAmount: number;
+    voucherNo: string;
+    voucherId: string;
+    workDescription?: string;
+  }) {
+    await this.createVendorNotification({
+      vendorUserId,
+      title: 'Payment Processed',
+      message: `Payment of ₹${paymentAmount.toLocaleString('en-IN')} has been processed for voucher ${voucherNo}.${workDescription ? ` Work: ${workDescription}` : ''}`,
+      voucherNo,
+      voucherId,
+      type: 'payment',
+      extra: { amountPaid: paymentAmount }
+    });
+  },
+
+  /**
+   * Send vendor assignment notification
+   */
+  async sendVoucherAssignmentNotification({
+    vendorUserId,
+    voucherNo,
+    voucherId,
+    itemName,
+    quantity,
+    isForwarded = false,
+    senderName
+  }: {
+    vendorUserId: string;
+    voucherNo: string;
+    voucherId: string;
+    itemName: string;
+    quantity: number;
+    isForwarded?: boolean;
+    senderName: string;
+  }) {
+    const title = isForwarded ? 'Voucher Forwarded to You' : 'Voucher Assigned to You';
+    const message = isForwarded
+      ? `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) has been forwarded to you by ${senderName}.`
+      : `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) has been assigned to you.`;
+
+    await this.createVendorNotification({
+      vendorUserId,
+      title,
+      message,
+      voucherNo,
+      voucherId,
+      type: 'voucher_assignment',
+      extra: { itemName, quantity, senderName }
+    });
+  },
+
+  /**
+   * Send voucher completion notification
+   */
+  async sendVoucherCompletionNotification({
+    vendorUserId,
+    voucherNo,
+    voucherId,
+    itemName,
+    quantity,
+    isCompleted = false
+  }: {
+    vendorUserId: string;
+    voucherNo: string;
+    voucherId: string;
+    itemName: string;
+    quantity: number;
+    isCompleted?: boolean;
+  }) {
+    const title = isCompleted ? 'Voucher Completed' : 'Voucher Completion Request';
+    const message = isCompleted
+      ? `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) has been completed and confirmed.`
+      : `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) completion request has been submitted.`;
+
+    await this.createVendorNotification({
+      vendorUserId,
+      title,
+      message,
+      voucherNo,
+      voucherId,
+      type: 'voucher_completion',
+      extra: { itemName, quantity, isCompleted }
+    });
+  },
+
+  /**
+   * Create a vendor notification (separate from admin notifications)
+   */
+  async createVendorNotification({
+    vendorUserId,
+    title,
+    message,
+    voucherNo,
+    voucherId,
+    type,
+    extra = {}
+  }: {
+    vendorUserId: string;
+    title: string;
+    message: string;
+    voucherNo?: string;
+    voucherId?: string;
+    type?: string;
+    extra?: Record<string, any>;
+  }): Promise<string> {
+    try {
+      const notificationData: any = {
+        vendorUserId,
+        title,
+        message,
+        read: false,
+        voucherNo,
+        voucherId,
+        type,
+        createdAt: serverTimestamp(),
+        ...extra
+      };
+      const notificationRef = await addDoc(collection(db, 'vendorNotifications'), notificationData);
+      console.log('Vendor notification created with ID:', notificationRef.id);
+      return notificationRef.id;
+    } catch (error) {
+      console.error('Error creating vendor notification:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get notifications for a user
+   * @param userId - User ID
+   * @param limit - Number of notifications to get
+   * @returns List of notifications
+   */
+  async getUserNotifications(userId: string, notificationLimit: number = 10): Promise<any[]> {
+    try {
+      const notificationsRef = collection(db, 'notifications');
+
+      // First get all notifications for this user
+      const userNotificationsQuery = query(
+        notificationsRef,
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc'),
+        limit(notificationLimit)
+      );
+
+      const notificationsSnapshot = await getDocs(userNotificationsQuery);
+
+      const notificationsList: any[] = [];
+      notificationsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        notificationsList.push({
+          id: doc.id,
+          userId: data.userId,
+          title: data.title,
+          message: data.message,
+          read: data.read,
+          voucherId: data.voucherId,
+          createdAt: data.createdAt
+        });
+      });
+
+      return notificationsList;
+    } catch (error) {
+      console.error('Error fetching user notifications:', error);
+      return [];
+    }
+  }
+};
