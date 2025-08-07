@@ -538,7 +538,11 @@ export default function AdminPaymentComponent() {
                           {row.vendorCode}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                          {row.voucherDate ? new Date(row.voucherDate).toLocaleDateString() : ''}
+                          {row.voucherDate ? new Date(row.voucherDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric'
+                          }) : ''}
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-sm text-gray-900">{row.jobWorkDone}</div>

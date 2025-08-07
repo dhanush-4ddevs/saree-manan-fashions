@@ -1672,10 +1672,18 @@ export default function MyProfile() {
                             {getFilteredAndSortedTransactions().map((transaction) => (
                               <tr key={transaction.id} className="hover:bg-blue-50 transition-colors">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-800">
-                                  {new Date(transaction.actionDate).toLocaleDateString()}
+                                  {new Date(transaction.actionDate).toLocaleDateString('en-GB', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })}
                                   {transaction.paymentDate && (
                                     <div className="text-xs text-green-600 font-medium">
-                                      Paid: {new Date(transaction.paymentDate).toLocaleDateString()}
+                                      Paid: {new Date(transaction.paymentDate).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                      })}
                                     </div>
                                   )}
                                 </td>

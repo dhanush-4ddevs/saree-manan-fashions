@@ -681,11 +681,19 @@ export default function ReceiveReport() {
                           </td>
                           <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
                           <td className="border p-2">{highlightSearchTerm(item.voucherNo, searchTerm)}</td>
-                          <td className="border p-2">{item.voucherDate}</td>
+                          <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : 'N/A'}</td>
                           <td className="border p-2">{highlightSearchTerm(item.item, searchTerm)}</td>
                           <td className="border p-2">{highlightSearchTerm(item.jobWork, searchTerm)}</td>
                           <td className="border p-2">{item.vendorCode}</td>
-                          <td className="border p-2">{item.lrDate || 'N/A'}</td>
+                          <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          }) : 'N/A'}</td>
                           <td className="border p-2">{item.lrNumber || 'N/A'}</td>
                           <td className="border p-2">{item.transportName || 'N/A'}</td>
                           <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>
@@ -927,11 +935,19 @@ export default function ReceiveReport() {
                             </td>
                             <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
                             <td className="border p-2">{item.voucherNo}</td>
-                            <td className="border p-2">{item.voucherDate}</td>
+                            <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : 'N/A'}</td>
                             <td className="border p-2">{item.item}</td>
                             <td className="border p-2">{item.jobWork}</td>
                             <td className="border p-2">{item.vendorCode}</td>
-                            <td className="border p-2">{item.lrDate || 'N/A'}</td>
+                            <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : 'N/A'}</td>
                             <td className="border p-2">{item.lrNumber || 'N/A'}</td>
                             <td className="border p-2">{item.transportName || 'N/A'}</td>
                             <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>

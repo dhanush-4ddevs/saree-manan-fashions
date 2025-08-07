@@ -687,11 +687,10 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                   <button
                     onClick={handleSearch}
                     disabled={!!dateError}
-                    className={`absolute right-1 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs rounded transition-colors ${
-                      dateError
-                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                        : 'text-white bg-blue-600 hover:bg-blue-700'
-                    }`}
+                    className={`absolute right-1 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs rounded transition-colors ${dateError
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'text-white bg-blue-600 hover:bg-blue-700'
+                      }`}
                   >
                     Search
                   </button>
@@ -782,11 +781,10 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                       <button
                         onClick={handleSearch}
                         disabled={!!dateError}
-                        className={`flex items-center gap-1 px-3 py-1 text-xs rounded transition-colors ${
-                          dateError
-                            ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                            : 'text-white bg-blue-600 hover:bg-blue-700'
-                        }`}
+                        className={`flex items-center gap-1 px-3 py-1 text-xs rounded transition-colors ${dateError
+                          ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                          : 'text-white bg-blue-600 hover:bg-blue-700'
+                          }`}
                       >
                         <Search className="h-3 w-3" />
                         Search
@@ -1068,7 +1066,16 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                           {(voucher as any).userCode ?? 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {voucher.events.find(e => e.event_type === 'dispatch')?.details.transport?.lr_date || 'N/A'}
+                          {(() => {
+                            const lrDate = voucher.events.find(e => e.event_type === 'dispatch')?.details.transport?.lr_date;
+                            if (!lrDate) return 'N/A';
+                            const dateObj = new Date(lrDate);
+                            if (isNaN(dateObj.getTime())) return 'N/A';
+                            const day = dateObj.getDate().toString().padStart(2, '0');
+                            const month = dateObj.toLocaleString('en-US', { month: 'short' });
+                            const year = dateObj.getFullYear();
+                            return `${day} ${month} ${year}`;
+                          })()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {voucher.events.find(e => e.event_type === 'dispatch')?.details.transport?.lr_no || 'N/A'}
