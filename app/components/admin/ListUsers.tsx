@@ -625,7 +625,7 @@ export default function ListUsers() {
                 <div>
                   <h4 className="text-sm font-medium text-red-800">Delete All Users</h4>
                   <p className="text-sm text-red-600 mt-1">
-                    This will permanently delete all users except the protected user (phone: 9876543210).
+                    This will permanently delete all users except the Master Admin.
                     This action cannot be undone.
                   </p>
                 </div>
@@ -1314,7 +1314,7 @@ export default function ListUsers() {
                       Are you sure you want to delete all users?
                     </h4>
                     <p className="text-sm text-gray-600 mb-3">
-                      This action will permanently delete all users from the system except the protected user (phone: 9876543210).
+                      This action will permanently delete all users from the system except the Master Admin.
                       Once deleted, these users cannot be recovered.
                     </p>
                     <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, ArrowLeft, Upload, Download, Printer, Save, FileText, CreditCard, IndianRupee, Package, Database, Settings, Trash2, Shield, AlertTriangle } from 'lucide-react';
 import { getCurrentUser } from '@/config/firebase';
-import { doc, updateDoc, collection, query, where, getDocs, orderBy, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs, orderBy, deleteDoc, getDoc } from 'firebase/firestore';
 import { db, storage } from '@/config/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import Image from 'next/image';
@@ -641,7 +641,7 @@ export default function MyProfile() {
       setBackupProgress(0);
       setSaveMessage({ type: '', message: '' });
 
-      const collections = ['users', 'payments', 'notifications', 'vendorNotifications', 'passwordChangeRequests'];
+      const collections = ['users', 'payments', 'passwordChangeRequests'];
       const allData: any = {};
       const progressStep = 100 / (collections.length + 2); // +2 for vouchers and events
 
@@ -680,38 +680,35 @@ export default function MyProfile() {
       // Create Excel workbook
       const workbook = XLSX.utils.book_new();
 
+      const localNow = new Date();
+
       // Create summary sheet
       const summaryData = [
         { 'Collection': 'Users', 'Count': allData.users?.length || 0, 'Description': 'All user accounts (admin and vendors)' },
         { 'Collection': 'Vouchers', 'Count': allData.vouchers?.length || 0, 'Description': 'All voucher records with complete data' },
         { 'Collection': 'Voucher Events', 'Count': allData.voucher_events?.length || 0, 'Description': 'Individual events within vouchers (dispatch, receive, forward)' },
         { 'Collection': 'Payments', 'Count': allData.payments?.length || 0, 'Description': 'All payment transactions' },
-        { 'Collection': 'Notifications', 'Count': allData.notifications?.length || 0, 'Description': 'Admin notifications' },
-        { 'Collection': 'Vendor Notifications', 'Count': allData.vendorNotifications?.length || 0, 'Description': 'Vendor-specific notifications' },
+        // Notifications excluded
         { 'Collection': 'Password Requests', 'Count': allData.passwordChangeRequests?.length || 0, 'Description': 'Password change requests' },
         { 'Collection': 'Total Records', 'Count': Object.values(allData).reduce((sum: number, arr: any) => sum + (arr?.length || 0), 0), 'Description': 'Total records across all collections' },
-        { 'Collection': 'Backup Date', 'Count': new Date().toISOString(), 'Description': 'Date and time of backup creation' }
+        { 'Collection': 'Backup Date', 'Count': `${localNow.toLocaleDateString('en-GB')} ${localNow.toLocaleTimeString('en-GB')}`, 'Description': 'Date and time of backup creation' }
       ];
 
       const summaryWorksheet = XLSX.utils.json_to_sheet(summaryData);
-      summaryWorksheet['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 60 }];
+      (summaryWorksheet as any)['!cols'] = [{ wch: 24 }, { wch: 12 }, { wch: 70 }];
+      if ((summaryWorksheet as any)['!ref']) {
+        (summaryWorksheet as any)['!autofilter'] = { ref: (summaryWorksheet as any)['!ref'] };
+        (summaryWorksheet as any)['!freeze'] = { rows: 1, cols: 0 } as any;
+      }
       XLSX.utils.book_append_sheet(workbook, summaryWorksheet, 'Summary');
 
-      // Add each collection as a separate worksheet
-      Object.keys(allData).forEach(collectionName => {
-        const data = allData[collectionName];
-        if (data.length > 0) {
-          const worksheet = XLSX.utils.json_to_sheet(data);
-
-          // Set column widths for better readability
-          const maxWidth = Object.keys(data[0] || {}).reduce((max, key) => {
-            return Math.max(max, key.length, ...data.map((row: any) => String(row[key] || '').length));
-          }, 10);
-
-          worksheet['!cols'] = [{ wch: Math.min(maxWidth, 50) }];
-
-          XLSX.utils.book_append_sheet(workbook, worksheet, collectionName);
-        }
+      // Add each collection as a separate worksheet with friendly formatting
+      Object.keys(allData).forEach((rawCollectionName) => {
+        const data = allData[rawCollectionName];
+        if (!Array.isArray(data) || data.length === 0) return;
+        const worksheet = createWorksheetForCollection(rawCollectionName, data);
+        const safeName = sanitizeSheetName(toTitleCase(rawCollectionName));
+        XLSX.utils.book_append_sheet(workbook, worksheet, safeName);
       });
 
       // Generate filename with current date
@@ -872,6 +869,253 @@ export default function MyProfile() {
     return processed;
   };
 
+  // Excel export helpers for non-technical readability
+  interface ColumnConfig {
+    headerLabel: string;
+    dataKey?: string; // dot.notation path after flattening
+    valueGetter?: (row: any, flatRow: Record<string, any>) => any; // compute value from row
+    type?: 'text' | 'date' | 'currency' | 'number' | 'boolean';
+    width?: number; // approximate characters
+  }
+
+  const toTitleCase = (rawKey: string): string => {
+    const spaced = rawKey
+      .replace(/[_.-]+/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return spaced
+      .split(' ')
+      .map(w => (w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+      .join(' ');
+  };
+
+  const flattenObject = (obj: any, parentKey = '', result: Record<string, any> = {}): Record<string, any> => {
+    if (obj === null || obj === undefined) return result;
+    Object.keys(obj).forEach((key) => {
+      const value = (obj as any)[key];
+      const newKey = parentKey ? `${parentKey}.${key}` : key;
+      if (Array.isArray(value)) {
+        if (value.every(v => ['string', 'number', 'boolean'].includes(typeof v))) {
+          result[newKey] = value.join(', ');
+        } else {
+          result[newKey] = JSON.stringify(value);
+        }
+      } else if (value && typeof value === 'object' && !(value instanceof Date)) {
+        flattenObject(value, newKey, result);
+      } else {
+        result[newKey] = value;
+      }
+    });
+    return result;
+  };
+
+  const sanitizeSheetName = (name: string): string => {
+    const invalid = /[\\\/*\[\]:?]/g;
+    const cleaned = name.replace(invalid, ' ').trim();
+    return cleaned.length > 31 ? cleaned.slice(0, 31) : cleaned || 'Sheet';
+  };
+
+  const inferTypeForKey = (key: string, values: any[]): ColumnConfig['type'] => {
+    const keyLower = key.toLowerCase();
+    if (/(date|time|created|updated|timestamp)/.test(keyLower)) return 'date';
+    if (/(amount|price|total|balance|pay|paid|pending)/.test(keyLower)) return 'currency';
+    if (/(qty|quantity|count|number|no\b|id$)/.test(keyLower)) return 'number';
+    const nonNulls = values.filter(v => v !== null && v !== undefined);
+    if (nonNulls.every(v => typeof v === 'number')) return 'number';
+    if (nonNulls.every(v => typeof v === 'boolean')) return 'boolean';
+    return 'text';
+  };
+
+  const buildAutoColumnsFromData = (rows: any[]): ColumnConfig[] => {
+    if (!rows || rows.length === 0) return [];
+    const sample = flattenObject(rows[0]);
+    return Object.keys(sample).map((key) => ({
+      headerLabel: toTitleCase(key),
+      dataKey: key,
+      type: inferTypeForKey(key, rows.map(r => flattenObject(r)[key]))
+    }));
+  };
+
+  // Optional curated column orders for known collections
+  const columnConfigsByCollection: Record<string, ColumnConfig[]> = {
+    users: [
+      { headerLabel: 'Code', dataKey: 'userCode', type: 'text', width: 12 },
+      { headerLabel: 'Category', valueGetter: (row) => row.category || row.role || '', type: 'text', width: 12 },
+      { headerLabel: 'Name', valueGetter: (row) => [row.firstName, row.surname].filter(Boolean).join(' '), type: 'text', width: 22 },
+      { headerLabel: 'Email', dataKey: 'email', type: 'text', width: 26 },
+      { headerLabel: 'Phone', dataKey: 'phone', type: 'text', width: 14 },
+      { headerLabel: 'State', dataKey: 'address.state', type: 'text', width: 14 },
+      { headerLabel: 'District', dataKey: 'address.district', type: 'text', width: 14 },
+      { headerLabel: 'City', dataKey: 'address.city', type: 'text', width: 14 },
+      { headerLabel: 'Address', dataKey: 'address.line1', type: 'text', width: 30 },
+      { headerLabel: 'Company', dataKey: 'companyName', type: 'text', width: 20 },
+      { headerLabel: 'Job Work', valueGetter: (row) => row.vendorJobWork || row.jobWork || '', type: 'text', width: 16 },
+      { headerLabel: 'Designation', dataKey: 'designation', type: 'text', width: 16 },
+      // Keep extra helpful fields as well
+      { headerLabel: 'Role', dataKey: 'role', type: 'text', width: 12 },
+      { headerLabel: 'KYC Status', dataKey: 'kycStatus', type: 'text', width: 14 },
+    ],
+    payments: [
+      { headerLabel: 'Payment Date', dataKey: 'paymentDate', type: 'date', width: 14 },
+      { headerLabel: 'Voucher No', dataKey: 'voucherNo', type: 'text', width: 14 },
+      { headerLabel: 'Vendor Name', dataKey: 'vendorName', type: 'text', width: 20 },
+      { headerLabel: 'Vendor Code', dataKey: 'vendorCode', type: 'text', width: 12 },
+      { headerLabel: 'Work Done', dataKey: 'jobWorkDone', type: 'text', width: 18 },
+      { headerLabel: 'Quantity', dataKey: 'netQty', type: 'number', width: 12 },
+      { headerLabel: 'Price Per Piece (₹)', dataKey: 'pricePerPiece', type: 'currency', width: 18 },
+      { headerLabel: 'Total Amount (₹)', dataKey: 'totalAmount', type: 'currency', width: 18 },
+      { headerLabel: 'Amount Paid (₹)', dataKey: 'amountPaid', type: 'currency', width: 18 },
+    ],
+    vouchers: [
+      // Mirror of AllVouchers.tsx table view with requested changes
+      { headerLabel: 'Voucher No', dataKey: 'voucher_no', type: 'text', width: 16 },
+      { headerLabel: 'Voucher Date', dataKey: 'created_at', type: 'date', width: 16 },
+      { headerLabel: 'Voucher Created By', valueGetter: (row) => row.createdByName || row.created_by_user_id || 'N/A', type: 'text', width: 24 },
+      { headerLabel: 'Forwarded To', valueGetter: (row) => row.vendorName || 'N/A', type: 'text', width: 22 },
+      { headerLabel: 'Vendor Code', valueGetter: (row) => row.userCode ?? 'N/A', type: 'text', width: 12 },
+      { headerLabel: 'Item', dataKey: 'item_details.item_name', type: 'text', width: 20 },
+      { headerLabel: 'Qty', dataKey: 'item_details.initial_quantity', type: 'number', width: 10 },
+      { headerLabel: 'Job Work', valueGetter: (row) => row.vendorJobWork || '', type: 'text', width: 16 },
+      { headerLabel: 'LR Date', valueGetter: (row) => row.events?.find((e: any) => e.event_type === 'dispatch')?.details?.transport?.lr_date || '', type: 'date', width: 14 },
+      { headerLabel: 'LR Number', valueGetter: (row) => row.events?.find((e: any) => e.event_type === 'dispatch')?.details?.transport?.lr_no || '', type: 'text', width: 16 },
+      { headerLabel: 'Transport Name', valueGetter: (row) => row.events?.find((e: any) => e.event_type === 'dispatch')?.details?.transport?.transporter_name || '', type: 'text', width: 18 },
+      { headerLabel: 'Status', dataKey: 'voucher_status', type: 'text', width: 14 },
+    ],
+    voucher_events: [
+      // Enriched event export with voucher context
+      { headerLabel: 'Voucher No', dataKey: 'voucher_no', type: 'text', width: 16 },
+      { headerLabel: 'Event ID', dataKey: 'event_id', type: 'text', width: 18 },
+      { headerLabel: 'Event Type', dataKey: 'event_type', type: 'text', width: 14 },
+      { headerLabel: 'Timestamp', dataKey: 'timestamp', type: 'date', width: 18 },
+      { headerLabel: 'Sender (User ID)', dataKey: 'details.sender_id', type: 'text', width: 24 },
+      { headerLabel: 'Receiver (User ID)', dataKey: 'details.receiver_id', type: 'text', width: 24 },
+      { headerLabel: 'Job Work', dataKey: 'details.jobWork', type: 'text', width: 16 },
+      { headerLabel: 'Qty Dispatched', dataKey: 'details.quantity_dispatched', type: 'number', width: 14 },
+      { headerLabel: 'Qty Expected', dataKey: 'details.quantity_expected', type: 'number', width: 14 },
+      { headerLabel: 'Qty Received', dataKey: 'details.quantity_received', type: 'number', width: 14 },
+      { headerLabel: 'Qty Before Job', dataKey: 'details.quantity_before_job', type: 'number', width: 16 },
+      { headerLabel: 'Qty Forwarded', dataKey: 'details.quantity_forwarded', type: 'number', width: 14 },
+      { headerLabel: 'Price Per Piece (₹)', dataKey: 'details.price_per_piece', type: 'currency', width: 18 },
+      { headerLabel: 'Transport Name', dataKey: 'details.transport.transporter_name', type: 'text', width: 20 },
+      { headerLabel: 'LR Number', dataKey: 'details.transport.lr_no', type: 'text', width: 16 },
+      { headerLabel: 'LR Date', dataKey: 'details.transport.lr_date', type: 'date', width: 16 },
+      { headerLabel: 'Missing On Arrival', dataKey: 'details.discrepancies.missing', type: 'number', width: 18 },
+      { headerLabel: 'Damaged On Arrival', dataKey: 'details.discrepancies.damaged_on_arrival', type: 'number', width: 20 },
+      { headerLabel: 'Damaged After Job', dataKey: 'details.discrepancies.damaged_after_job', type: 'number', width: 18 },
+      { headerLabel: 'Damage Reason', dataKey: 'details.discrepancies.damage_reason', type: 'text', width: 24 },
+      { headerLabel: 'Comment', dataKey: 'comment', type: 'text', width: 30 },
+    ],
+    notifications: [],
+    vendorNotifications: [],
+    passwordChangeRequests: [],
+  };
+
+  const getValueByPath = (obj: any, path: string): any => {
+    if (!path) return undefined;
+    return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+  };
+
+  const createWorksheetForCollection = (collectionName: string, data: any[]) => {
+    if (!data || data.length === 0) {
+      return XLSX.utils.aoa_to_sheet([[`No records in ${toTitleCase(collectionName)}`]]);
+    }
+
+    const flatRows = data.map((row) => flattenObject(row));
+
+    let columns: ColumnConfig[] = columnConfigsByCollection[collectionName] && columnConfigsByCollection[collectionName].length > 0
+      ? columnConfigsByCollection[collectionName]
+      : buildAutoColumnsFromData(flatRows);
+
+    const headers = columns.map(c => c.headerLabel);
+    const body = flatRows.map((flatRow, idx) => {
+      const row = data[idx];
+      const shaped: Record<string, any> = {};
+      columns.forEach((col) => {
+        let value: any;
+        if (col.valueGetter) {
+          value = col.valueGetter(row, flatRow);
+        } else if (col.dataKey) {
+          value = getValueByPath(flatRow, col.dataKey);
+        } else {
+          value = '';
+        }
+        if (value === undefined || value === null) {
+          shaped[col.headerLabel] = '';
+          return;
+        }
+        switch (col.type) {
+          case 'date': {
+            try {
+              const d = typeof value === 'string' ? new Date(value) : value;
+              shaped[col.headerLabel] = isNaN(new Date(d).getTime())
+                ? String(value)
+                : new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            } catch {
+              shaped[col.headerLabel] = String(value);
+            }
+            break;
+          }
+          case 'currency': {
+            const num = Number(value);
+            shaped[col.headerLabel] = isNaN(num) ? String(value) : num;
+            break;
+          }
+          case 'number': {
+            const num = Number(value);
+            shaped[col.headerLabel] = isNaN(num) ? String(value) : num;
+            break;
+          }
+          case 'boolean':
+            shaped[col.headerLabel] = value ? 'Yes' : 'No';
+            break;
+          default:
+            shaped[col.headerLabel] = String(value);
+        }
+      });
+      return shaped;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(body, { header: headers, skipHeader: false });
+
+    const cols = headers.map((header, i) => {
+      const configured = columns[i]?.width || 0;
+      const maxContent = Math.max(
+        header.length,
+        ...body.map(r => (r[header] !== undefined && r[header] !== null) ? String(r[header]).length : 0)
+      );
+      return { wch: Math.min(Math.max(configured || maxContent + 2, 10), 60) };
+    });
+    (ws as any)['!cols'] = cols;
+
+    if ((ws as any)['!ref']) {
+      (ws as any)['!autofilter'] = { ref: (ws as any)['!ref'] };
+    }
+    (ws as any)['!freeze'] = { rows: 1, cols: 0 } as any;
+
+    const range = XLSX.utils.decode_range((ws as any)['!ref'] as string);
+    headers.forEach((header, colIdx) => {
+      const colType = columns[colIdx]?.type;
+      if (colType === 'currency' || colType === 'number') {
+        for (let r = range.s.r + 1; r <= range.e.r; r++) {
+          const addr = XLSX.utils.encode_cell({ r, c: colIdx });
+          const cell = (ws as any)[addr];
+          if (!cell) continue;
+          if (typeof cell.v === 'number') {
+            cell.t = 'n';
+            if (colType === 'currency') {
+              cell.z = '₹#,##0.00';
+            } else {
+              cell.z = '#,##0';
+            }
+          }
+        }
+      }
+    });
+
+    return ws;
+  };
+
   // Enhanced function to create detailed voucher backup with events
   const createDetailedVoucherBackup = async () => {
     try {
@@ -880,6 +1124,19 @@ export default function MyProfile() {
 
       const vouchersData: any[] = [];
       const eventsData: any[] = [];
+
+      // Build user map for name/code lookups
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const userMap: Record<string, { firstName?: string; surname?: string; userCode?: string; companyName?: string }> = {};
+      usersSnapshot.forEach(u => {
+        const d = u.data() as any;
+        userMap[u.id] = {
+          firstName: d.firstName,
+          surname: d.surname,
+          userCode: d.userCode,
+          companyName: d.companyName,
+        };
+      });
 
       snapshot.forEach((doc) => {
         const voucher = doc.data();
@@ -890,6 +1147,35 @@ export default function MyProfile() {
           id: voucherId,
           ...voucher
         });
+        // Enrich voucher with fields used in AllVouchers.tsx
+        try {
+          // Creator name
+          if (voucher.created_by_user_id) {
+            const creator = userMap[voucher.created_by_user_id];
+            if (creator) {
+              const fullName = [creator.firstName, creator.surname].filter(Boolean).join(' ').trim();
+              processedVoucher.createdByName = fullName || voucher.created_by_user_id;
+            } else {
+              processedVoucher.createdByName = voucher.created_by_user_id;
+            }
+          }
+          // Dispatch receiver → Forwarded To and Vendor Code
+          const dispatchEvent = voucher.events?.find((e: any) => e.event_type === 'dispatch');
+          const receiverId = dispatchEvent?.details?.receiver_id;
+          if (receiverId) {
+            const receiver = userMap[receiverId];
+            if (receiver) {
+              const rName = [receiver.firstName, receiver.surname].filter(Boolean).join(' ').trim();
+              processedVoucher.vendorName = rName || receiver.companyName || receiverId;
+              processedVoucher.userCode = receiver.userCode || 'N/A';
+            } else {
+              processedVoucher.vendorName = receiverId;
+              processedVoucher.userCode = 'N/A';
+            }
+            processedVoucher.vendorJobWork = processedVoucher.vendorJobWork || dispatchEvent?.details?.jobWork || '';
+          }
+        } catch { }
+
         vouchersData.push(processedVoucher);
 
         // Extract and process events separately for better analysis
@@ -1914,7 +2200,7 @@ export default function MyProfile() {
                 <li>• All vendor notifications</li>
                 <li>• All password change requests</li>
               </ul>
-              <p className="text-sm text-red-600 mt-2 font-medium">User accounts will be preserved.</p>
+              <p className="text-sm text-red-600 mt-2 font-medium">Only User accounts will be preserved.</p>
             </div>
 
             <div className="flex space-x-3">

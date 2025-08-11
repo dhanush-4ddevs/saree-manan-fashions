@@ -20,6 +20,7 @@ import {
   type PinCodeData
 } from '../../utils/indianGeographicData';
 import { useJobWorks } from '@/hooks/useJobWorks';
+import { Toast } from '@/components/shared/Toast';
 
 interface UserFormData {
   category: 'admin' | 'vendor' | '';
@@ -136,6 +137,11 @@ export default function AddUser() {
   const [activeVendorJobWorkMenu, setActiveVendorJobWorkMenu] = useState<number | null>(null);
   // Add state to track vendor job work operations to prevent form submission
   const [isVendorJobWorkOperationInProgress, setIsVendorJobWorkOperationInProgress] = useState(false);
+
+  // Toast state
+  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   // New states for autocomplete functionality
   const [districtSearchTerm, setDistrictSearchTerm] = useState<string>('');
@@ -440,7 +446,7 @@ export default function AddUser() {
       setIsSubmitting(false);
 
       // Create error message summary
-      const errorMessages = [];
+      const errorMessages = [] as string[];
       if (errors.phone) errorMessages.push(errors.phone);
       if (errors.email) errorMessages.push(errors.email);
       if (errors.category) errorMessages.push(errors.category);
@@ -451,8 +457,11 @@ export default function AddUser() {
       if (errors.address) {
         Object.values(errors.address).forEach(msg => errorMessages.push(msg));
       }
-
-      setError(errorMessages.join(' '));
+      const combined = errorMessages.join(' ');
+      setError(combined);
+      setToastMessage(combined);
+      setToastType('error');
+      setIsToastVisible(true);
 
       // Scroll to error message
       setTimeout(scrollToErrors, 100);
@@ -485,6 +494,9 @@ export default function AddUser() {
         // Create user through firebase authentication and firestore
         await createUser(dataToSubmit, adminData.uid);
         setIsUserCreated(true);
+        setToastMessage('User created successfully');
+        setToastType('success');
+        setIsToastVisible(true);
 
         // Refresh recent users list
         fetchRecentUsers();
@@ -515,7 +527,7 @@ export default function AddUser() {
         setValidationErrors({});
         setRealTimeErrors({});
 
-        router.push('/admin-dashboard');
+        // Do not redirect; remain on this page and show toast
       } catch (err: any) {
         console.error('Failed to add user:', err);
 
@@ -523,16 +535,28 @@ export default function AddUser() {
         // but the user was successfully created
         if (err.message && (err.message.includes("User was created") || err.message.includes("User created"))) {
           setIsUserCreated(true);
-          setError('User was created successfully, but there was an issue with the profile picture upload. The user can still use the system normally.');
+          const msg = 'User was created successfully, but there was an issue with the profile picture upload. The user can still use the system normally.';
+          setError(msg);
+          setToastMessage(msg);
+          setToastType('error');
+          setIsToastVisible(true);
         } else {
           // Other types of errors
-          setError(err.message || 'Failed to add user. Please try again.');
+          const msg = err.message || 'Failed to add user. Please try again.';
+          setError(msg);
+          setToastMessage(msg);
+          setToastType('error');
+          setIsToastVisible(true);
         }
         setTimeout(scrollToErrors, 100);
       }
     } catch (err: any) {
       console.error('Failed to validate form or prepare data:', err);
-      setError(err.message || 'Invalid form data. Please check all fields and try again.');
+      const msg = err.message || 'Invalid form data. Please check all fields and try again.';
+      setError(msg);
+      setToastMessage(msg);
+      setToastType('error');
+      setIsToastVisible(true);
       setTimeout(scrollToErrors, 100);
     } finally {
       setIsSubmitting(false);
@@ -1201,6 +1225,12 @@ export default function AddUser() {
 
   return (
     <AdminProtectedRoute>
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        isVisible={isToastVisible}
+        onClose={() => setIsToastVisible(false)}
+      />
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}

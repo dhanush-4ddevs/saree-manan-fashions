@@ -141,8 +141,11 @@ export default function ForwardReport() {
 
           // Check if this voucher has a forward event by the current vendor
           return events.some((event: any) => {
-            return event.event_type === 'forward' &&
-              (event.user_id === vendorId || event.details?.sender_id === vendorId);
+            if (!event || typeof event !== 'object') return false;
+            const type = event.event_type;
+            const details = event.details || {};
+            const sender = event.user_id || details.sender_id;
+            return type === 'forward' && sender === vendorId;
           });
         });
 
@@ -161,9 +164,9 @@ export default function ForwardReport() {
           );
 
           const aLatestForward = aForwardEvents.length > 0 ?
-            new Date(aForwardEvents[aForwardEvents.length - 1].timestamp).getTime() : 0;
+            Math.max(...aForwardEvents.map((e: any) => toEpochMs(e.timestamp))) : 0;
           const bLatestForward = bForwardEvents.length > 0 ?
-            new Date(bForwardEvents[bForwardEvents.length - 1].timestamp).getTime() : 0;
+            Math.max(...bForwardEvents.map((e: any) => toEpochMs(e.timestamp))) : 0;
 
           return bLatestForward - aLatestForward; // Most recent first
         }).slice(0, 5); // Take only last 5
@@ -349,33 +352,44 @@ export default function ForwardReport() {
   };
 
   // Format date
+  const toJsDate = (value: any): Date | null => {
+    if (!value) return null;
+    try {
+      if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+      if (typeof value === 'string') {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (typeof value === 'number') {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (value && typeof value === 'object' && typeof value.toDate === 'function') {
+        const d = value.toDate();
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (value && typeof value === 'object' && typeof value.seconds === 'number') {
+        const ms = value.seconds * 1000 + (typeof value.nanoseconds === 'number' ? Math.floor(value.nanoseconds / 1e6) : 0);
+        const d = new Date(ms);
+        return isNaN(d.getTime()) ? null : d;
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  };
+
+  const toEpochMs = (value: any): number => {
+    const d = toJsDate(value);
+    return d ? d.getTime() : 0;
+  };
+
   const formatDate = (iso: string | any) => {
     if (!iso) return '';
 
     try {
-      let d: Date;
-
-      // Handle different timestamp formats
-      if (typeof iso === 'string') {
-        // If it's already a formatted string like "07/29/2025, 08:06:23 PM", return as is
-        if (iso.includes(',') && iso.includes('PM') || iso.includes('AM')) {
-          return iso;
-        }
-        // Handle ISO string
-        d = new Date(iso);
-      } else if (iso && typeof iso === 'object' && iso.toDate) {
-        // Handle Firestore Timestamp
-        d = iso.toDate();
-      } else {
-        // Handle other date objects
-        d = new Date(iso);
-      }
-
-      // Check if the date is valid
-      if (isNaN(d.getTime())) {
-        console.error('Invalid date:', iso);
-        return 'Invalid date';
-      }
+      const d = toJsDate(iso);
+      if (!d) return 'Invalid date';
 
       // Format with explicit options for Indian locale and timezone
       return d.toLocaleString('en-IN', {
@@ -764,7 +778,7 @@ export default function ForwardReport() {
 
       // Sort by timestamp (most recent first)
       return forwardEvents.sort((a: any, b: any) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        toEpochMs(b.timestamp) - toEpochMs(a.timestamp)
       );
     } catch (error) {
       console.error('Error getting forward events:', error);
@@ -788,7 +802,7 @@ export default function ForwardReport() {
       if (forwardEvents.length === 0) return null;
 
       // Return the most recent forward event
-      return forwardEvents[forwardEvents.length - 1];
+      return forwardEvents.sort((a: any, b: any) => toEpochMs(b.timestamp) - toEpochMs(a.timestamp))[0];
     } catch (error) {
       console.error('Error getting latest forward event:', error);
       return null;
@@ -947,7 +961,7 @@ export default function ForwardReport() {
                   <input
                     type="text"
                     className="pl-8 sm:pl-10 block w-full rounded-md border border-blue-300 bg-blue-50 py-2 px-3 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    value={selectedVoucher ? formatDate(selectedVoucher.createdAt?.toDate ? selectedVoucher.createdAt.toDate().toISOString() : selectedVoucher.createdAt || selectedVoucher.created_at) : ''}
+                    value={selectedVoucher ? formatDate(selectedVoucher.createdAt || selectedVoucher.created_at || selectedVoucher.created_at_ts) : ''}
                     readOnly
                   />
                 </div>
@@ -1164,6 +1178,7 @@ export default function ForwardReport() {
                     value={pricePerPiece}
                     min="0"
                     onChange={handlePricePerPieceChange}
+                    required
                   />
                   <span className="inline-flex items-center px-2 sm:px-3 rounded-r-md border-l border-blue-300 bg-blue-50 text-blue-500 text-xs sm:text-sm">
                     INR / piece
