@@ -7,14 +7,6 @@ import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { Toast } from '@/components/shared/Toast';
 
 function AdminDashboardContent() {
-  return (
-    <AdminProtectedRoute>
-      <AdminDashboard />
-    </AdminProtectedRoute>
-  );
-}
-
-export default function AdminDashboardPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isToastVisible, setIsToastVisible] = useState(false);
@@ -26,7 +18,6 @@ export default function AdminDashboardPage() {
     const type = (searchParams.get('type') as 'success' | 'error' | null) || 'success';
 
     if (toast) {
-      // Map known keys to friendly messages; fallback to provided text
       const message = toast === 'add_user_success'
         ? 'User created successfully'
         : decodeURIComponent(toast);
@@ -35,7 +26,6 @@ export default function AdminDashboardPage() {
       setToastType(type === 'error' ? 'error' : 'success');
       setIsToastVisible(true);
 
-      // Clean the URL so the toast doesn't reappear on refresh
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.delete('toast');
       params.delete('type');
@@ -46,9 +36,9 @@ export default function AdminDashboardPage() {
 
   return (
     <>
-      <Suspense fallback={<div>Loading...</div>}>
-        <AdminDashboardContent />
-      </Suspense>
+      <AdminProtectedRoute>
+        <AdminDashboard />
+      </AdminProtectedRoute>
       <Toast
         message={toastMessage}
         type={toastType}
@@ -56,5 +46,13 @@ export default function AdminDashboardPage() {
         onClose={() => setIsToastVisible(false)}
       />
     </>
+  );
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }
