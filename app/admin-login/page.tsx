@@ -22,7 +22,7 @@ export default function AdminLogin() {
     const init = async () => {
       try {
         // Create default admin
-        await createDefaultAdminIfNotExists();
+        // await createDefaultAdminIfNotExists();
       } catch (error) {
         console.error('Error creating default admin:', error);
       }

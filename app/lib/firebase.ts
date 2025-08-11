@@ -13,7 +13,7 @@ export {
   loginWithEmailAndPassword,
   checkUserExists,
   checkUserApproved,
-  createDefaultAdminIfNotExists,
+  // createDefaultAdminIfNotExists,
   clearAllUsers,
   testStorageAccess,
   setSession,

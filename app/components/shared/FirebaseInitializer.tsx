@@ -8,7 +8,7 @@ export default function FirebaseInitializer() {
     // Initialize default admin user and job works on app start
     const initializeFirebase = async () => {
       try {
-        await createDefaultAdminIfNotExists();
+        // await createDefaultAdminIfNotExists();
         await initializeDefaultJobWorks();
       } catch (error) {
         console.error('Error initializing Firebase:', error);
