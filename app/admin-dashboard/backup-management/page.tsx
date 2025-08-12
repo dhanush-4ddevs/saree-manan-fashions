@@ -14,7 +14,7 @@ export default function BackupManagementPage() {
             <div className="flex justify-between items-center py-8">
               <div>
                 <h1 className="text-3xl font-bold text-white">
-                  Backup Management
+                  Backup
                 </h1>
                 <p className="mt-2 text-blue-100">
                   Export and import daily backups of voucher data and images

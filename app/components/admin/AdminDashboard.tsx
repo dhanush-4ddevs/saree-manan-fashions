@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ListChecks, Users, Clock, LayoutDashboard, FileText, UserPlus, Settings, LogOut, ChevronDown, ChevronRight, IndianRupee, Plus, User, Check, Menu, X, Search, CreditCard, CheckCircle, RefreshCw, Printer, ArrowLeft, Info, Database } from 'lucide-react';
+import { ListChecks, Users, Clock, LayoutDashboard, FileText, UserPlus, Settings, LogOut, ChevronDown, ChevronRight, IndianRupee, Plus, User, Check, Menu, X, Search, CreditCard, CheckCircle, RefreshCw, Printer, ArrowLeft, Info, Database, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AllVouchers from '@/components/shared/AllVouchers';
 import AddUser from '@/admin-dashboard/add-user/page';
@@ -277,8 +277,8 @@ export default function AdminDashboard() {
       icon: Settings,
       isCategory: true,
       subItems: [
-        { name: 'Backup Management', icon: Database },
-        { name: 'Maintenance Tools', icon: Settings }
+        { name: 'Backup ', icon: Database },
+        { name: 'Delete', icon: Trash2 }
       ]
     }
 
@@ -301,14 +301,14 @@ export default function AdminDashboard() {
         { name: 'Receive Vouchers', icon: Check }
       ]
     },
+    { name: 'Accounts', icon: IndianRupee },
     {
       name: 'System', icon: Settings, hasSubMenu: true, subItems: [
-        { name: 'Backup Management', icon: Database },
-        { name: 'Maintenance Tools', icon: Settings }
+        { name: 'Backup ', icon: Database },
+        { name: 'Delete', icon: Settings }
       ]
     },
-    { name: 'Accounts', icon: IndianRupee },
-    { name: 'Profile', icon: User, action: () => handleProfileClick() }
+
   ];
 
   // Add state for mobile sub-menu visibility
@@ -422,10 +422,10 @@ export default function AdminDashboard() {
       router.push('/admin-dashboard?tab=All Vouchers');
     } else if (subItemName === 'Receive Vouchers') {
       router.push('/admin-dashboard/completion-requests');
-    } else if (subItemName === 'Backup Management') {
-      setActivePage('Backup Management');
-    } else if (subItemName === 'Maintenance Tools') {
-      setActivePage('Maintenance Tools');
+    } else if (subItemName === 'Backup ') {
+      setActivePage('Backup ');
+    } else if (subItemName === 'Delete') {
+      setActivePage('Delete');
     }
   };
 
@@ -538,11 +538,11 @@ export default function AdminDashboard() {
           );
         case 'Accounts':
           return <AdminPaymentComponent />;
-        case 'Backup Management':
+        case 'Backup ':
           return (
             <div>
               <div className="mb-8">
-                <h1 className="text-2xl font-bold text-blue-800">Backup Management</h1>
+                <h1 className="text-2xl font-bold text-blue-800">Backup Management </h1>
                 <p className="text-blue-600 mt-1">
                   Export and import daily backups of voucher data and images.
                 </p>
@@ -552,16 +552,16 @@ export default function AdminDashboard() {
               </div>
             </div>
           );
-        case 'Maintenance Tools':
+        case 'Delete':
           return (
             <div>
               <div className="mb-8">
-                <h1 className="text-2xl font-bold text-blue-800">Maintenance Tools</h1>
+                <h1 className="text-2xl font-bold text-blue-800">Deletion Management</h1>
                 <p className="text-blue-600 mt-1">
                   Backup data and perform system-wide maintenance actions.
                 </p>
               </div>
-              <div className="bg-white shadow-md rounded-lg border border-blue-100 p-4 md:p-6">
+              <div className="bg-white shadow-md rounded-lg border border-blue-100 md:p-6">
                 <SystemSettings />
               </div>
             </div>
@@ -573,9 +573,9 @@ export default function AdminDashboard() {
 
     return (
       <div>
-        <BackButton position="top" />
+        {/* <BackButton position="top" /> */}
         {pageContent}
-        <BackButton position="bottom" />
+        {/* <BackButton position="bottom" /> */}
       </div>
     );
   };
