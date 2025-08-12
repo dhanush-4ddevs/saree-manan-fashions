@@ -1029,7 +1029,7 @@ export default function ListUsers() {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto px-0 sm:px-0 lg:px-8">
       <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">

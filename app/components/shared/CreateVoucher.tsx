@@ -127,7 +127,7 @@ export default function CreateVoucher() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
+    <div className="bg-white rounded-xl shadow-md p-2">
       <div className="flex items-center mb-6">
         <PlusCircle className="h-5 w-5 text-blue-600 mr-2" />
         <h2 className="text-xl font-bold text-blue-800">Create New Voucher</h2>

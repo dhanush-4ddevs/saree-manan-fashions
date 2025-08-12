@@ -1227,54 +1227,95 @@ export default function MyProfile() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Enhanced Header */}
-          <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 py-8 px-8">
-            <div className="flex items-center justify-between text-white">
+          <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 py-6 px-4 sm:py-8 sm:px-8">
+            {/* Mobile header (image left of heading) */}
+            <div className="sm:hidden text-white">
               <div className="flex items-center">
-                <div className="bg-white/20 p-4 rounded-full backdrop-blur-sm">
-                  <User className="h-10 w-10" />
+                <div className="relative h-16 w-16 overflow-hidden rounded-full border-4 border-white shadow-lg">
+                  {profilePhotoUrl ? (
+                    <Image src={profilePhotoUrl} alt="Profile" fill className="object-cover" />
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full bg-white/20 ">
+                      <User className="h-8 w-8 text-white" />
+                    </div>
+                  )}
                 </div>
-                <div className="ml-6">
-                  <h1 className="text-3xl font-bold">My Profile</h1>
-                  <p className="text-blue-100 mt-1">Manage your account and preferences</p>
+                <div className="ml-3">
+                  <h1 className="text-2xl font-bold">My Profile</h1>
                 </div>
               </div>
 
-              {/* Profile Photo Section */}
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center">
+              {userData?.role === 'admin' && (
+                <div className="mt-3 flex items-center space-x-2">
+                  <input
+                    type="file"
+                    id="profile-photo-upload-mobile"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleProfilePhotoUpload}
+                  />
+                  <label
+                    htmlFor="profile-photo-upload-mobile"
+                    className="cursor-pointer bg-white text-blue-700 px-3 py-1.5 rounded-md text-xs font-medium shadow hover:bg-blue-50 transition-all duration-200"
+                  >
+                    Add Photo
+                  </label>
+                  {profilePhotoFile && !isUploadingPhoto && (
+                    <button
+                      onClick={uploadProfilePhoto}
+                      className="bg-white/90 text-blue-700 px-3 py-1.5 rounded-md text-xs font-semibold shadow hover:bg-white"
+                    >
+                      Upload
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {isUploadingPhoto && (
+                <div className="mt-2 text-[11px] text-white w-full max-w-[200px]">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
+                    <span>Uploading: {uploadProgress.toFixed(0)}%</span>
+                  </div>
+                  <div className="w-full bg-white/20 rounded-full h-1 mt-1">
+                    <div className="bg-white h-1 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop header (image left of heading with add photo below image) */}
+            <div className="hidden sm:flex items-center justify-between text-white">
+              <div className="flex items-center">
+                <div className="flex flex-col items-center">
                   <div className="relative h-20 w-20 overflow-hidden rounded-full border-4 border-white shadow-lg">
                     {profilePhotoUrl ? (
-                      <Image
-                        src={profilePhotoUrl}
-                        alt="Profile"
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={profilePhotoUrl} alt="Profile" fill className="object-cover" />
                     ) : (
-                      <div className="flex items-center justify-center bg-white/20 h-full w-full backdrop-blur-sm">
+                      <div className="flex items-center justify-center h-full w-full">
                         <User className="h-10 w-10 text-white" />
                       </div>
                     )}
                   </div>
                   {userData?.role === 'admin' && (
-                    <div className="ml-4">
+                    <div className="mt-2">
                       <input
                         type="file"
-                        id="profile-photo-upload"
+                        id="profile-photo-upload-desktop"
                         className="hidden"
                         accept="image/*"
                         onChange={handleProfilePhotoUpload}
                       />
                       <label
-                        htmlFor="profile-photo-upload"
-                        className="cursor-pointer bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 inline-block border border-white/30"
+                        htmlFor="profile-photo-upload-desktop"
+                        className="cursor-pointer bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 inline-block border border-white/30 text-sm"
                       >
                         Add Photo
                       </label>
                       {profilePhotoFile && !isUploadingPhoto && (
                         <button
                           onClick={uploadProfilePhoto}
-                          className="ml-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-200 font-medium"
+                          className="ml-2 bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-200 font-medium text-sm"
                         >
                           Upload
                         </button>
@@ -1293,6 +1334,10 @@ export default function MyProfile() {
                     </div>
                   )}
                 </div>
+                <div className="ml-6">
+                  <h1 className="text-3xl font-bold">My Profile</h1>
+                  <p className="text-blue-100 mt-1">Manage your account and preferences</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1302,7 +1347,7 @@ export default function MyProfile() {
             <div className="flex overflow-x-auto">
               <button
                 onClick={() => setActiveTab('personal')}
-                className={`px-8 py-4 font-medium text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'personal'
+                className={`px-4 py-3 sm:px-6 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'personal'
                   ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                   : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                   }`}
@@ -1313,7 +1358,7 @@ export default function MyProfile() {
               {userData?.role !== 'admin' && (
                 <button
                   onClick={() => setActiveTab('kyc')}
-                  className={`px-8 py-4 font-medium text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'kyc'
+                  className={`px-4 py-3 sm:px-6 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'kyc'
                     ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                     }`}
@@ -1325,7 +1370,7 @@ export default function MyProfile() {
               {userData?.role !== 'admin' && (
                 <button
                   onClick={() => setActiveTab('account')}
-                  className={`px-8 py-4 font-medium text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'account'
+                  className={`px-4 py-3 sm:px-6 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'account'
                     ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                     }`}
@@ -1337,7 +1382,7 @@ export default function MyProfile() {
               {userData?.role === 'admin' && (
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`px-8 py-4 font-medium text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'settings'
+                  className={`px-4 py-3 sm:px-6 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'settings'
                     ? 'border-b-2 border-blue-600 text-blue-600 bg-white'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-white/50'
                     }`}
@@ -1377,32 +1422,32 @@ export default function MyProfile() {
                   Personal Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">First Name</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.firstName || 'N/A'}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">Surname</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.surname || 'N/A'}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">Phone</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.phone || 'N/A'}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">Email</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.email || 'N/A'}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">Company Name</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.companyName || 'N/A'}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">Address</h3>
                     <p className="text-lg text-blue-900 font-medium">{displayAddress()}</p>
                     <p className="text-xs text-blue-500 mt-2">Added by admin - cannot be changed</p>
@@ -1414,12 +1459,12 @@ export default function MyProfile() {
                   Work Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-xl border border-green-200">
                     <h3 className="text-sm font-semibold text-green-700 mb-2">Code</h3>
                     <p className="text-lg text-green-900 font-medium">{userData.userCode || 'N/A'}</p>
                     <p className="text-xs text-green-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-xl border border-green-200">
                     <h3 className="text-sm font-semibold text-green-700 mb-2">Category</h3>
                     <p className="text-lg text-green-900 font-medium">
                       {(userData.category || userData.role || 'N/A').charAt(0).toUpperCase() +
@@ -1427,7 +1472,7 @@ export default function MyProfile() {
                     </p>
                     <p className="text-xs text-green-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200">
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-xl border border-green-200">
                     <h3 className="text-sm font-semibold text-green-700 mb-2">Work</h3>
                     <p className="text-lg text-green-900 font-medium">{userData.vendorJobWork || 'N/A'}</p>
                     <p className="text-xs text-green-500 mt-2">Added by admin - cannot be changed</p>
@@ -1848,7 +1893,7 @@ export default function MyProfile() {
                 </h2>
 
                 {/* Payment Summary Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-xl border border-blue-200 mb-8">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 sm:p-8 rounded-xl border border-blue-200 mb-8">
                   <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center">
                     <IndianRupee className="h-5 w-5 mr-2" />
                     Payment Summary
@@ -1877,7 +1922,7 @@ export default function MyProfile() {
                 </div>
 
                 {/* All Transactions Section */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-xl border border-blue-200">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 sm:p-8 rounded-xl border border-blue-200">
                   <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center">
                     <Package className="h-5 w-5 mr-2" />
                     All Transactions
@@ -1932,91 +1977,131 @@ export default function MyProfile() {
                       <p className="mt-2 text-blue-600">Loading transactions...</p>
                     </div>
                   ) : getFilteredAndSortedTransactions().length > 0 ? (
-                    <div className="bg-white rounded-xl border border-blue-200 overflow-hidden shadow-lg">
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-blue-200">
-                          <thead className="bg-gradient-to-r from-blue-50 to-blue-100">
-                            <tr>
-                              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Date
-                              </th>
-                              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Voucher
-                              </th>
-                              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Item & Work Done
-                              </th>
-                              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Amount Details
-                              </th>
-                              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
-                                Status
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-blue-100">
-                            {getFilteredAndSortedTransactions().map((transaction) => (
-                              <tr key={transaction.id} className="hover:bg-blue-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-800">
-                                  {new Date(transaction.actionDate).toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                  })}
-                                  {transaction.paymentDate && (
-                                    <div className="text-xs text-green-600 font-medium">
-                                      Paid: {new Date(transaction.paymentDate).toLocaleDateString('en-GB', {
-                                        day: '2-digit',
-                                        month: 'short',
-                                        year: 'numeric'
-                                      })}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-blue-800 font-medium">{transaction.voucherNo}</div>
-                                  {transaction.itemName && (
-                                    <div className="text-xs text-blue-600">{transaction.itemName}</div>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-blue-800">{transaction.jobWorkDone}</div>
-                                  <div className="text-xs text-blue-600">
-                                    {transaction.quantity} pcs × ₹{transaction.pricePerPiece}/pc
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-blue-800">
-                                    Total: ₹{transaction.totalAmount.toLocaleString('en-IN')}
-                                  </div>
-                                  {transaction.amountPaid > 0 && (
-                                    <div className="text-xs text-green-600 font-medium">
-                                      Paid: ₹{transaction.amountPaid.toLocaleString('en-IN')}
-                                    </div>
-                                  )}
-                                  {transaction.pendingAmount > 0 && (
-                                    <div className="text-xs text-red-600 font-medium">
-                                      Pending: ₹{transaction.pendingAmount.toLocaleString('en-IN')}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${transaction.status === 'Paid' ? 'bg-green-100 text-green-800' :
-                                    transaction.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
-                                      'bg-red-100 text-red-800'
-                                    }`}>
-                                    {transaction.status}
-                                  </span>
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    {transaction.type === 'payment' ? 'Payment' : 'Work Done'}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                    <>
+                      {/* Mobile list view */}
+                      <div className="space-y-3 md:hidden">
+                        {getFilteredAndSortedTransactions().map((transaction) => (
+                          <div key={transaction.id} className="bg-white rounded-xl border border-blue-200 p-4 shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <div className="text-xs text-blue-600">
+                                {new Date(transaction.actionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </div>
+                              <span className={`inline-flex px-2.5 py-0.5 text-[10px] font-semibold rounded-full ${transaction.status === 'Paid' ? 'bg-green-100 text-green-800' : transaction.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                                {transaction.status}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-blue-800 font-semibold text-sm">{transaction.voucherNo}</div>
+                            {transaction.itemName && (
+                              <div className="text-[11px] text-blue-600">{transaction.itemName}</div>
+                            )}
+                            <div className="mt-2 text-sm text-blue-800">{transaction.jobWorkDone}</div>
+                            <div className="text-[11px] text-blue-600">{transaction.quantity} pcs × ₹{transaction.pricePerPiece}/pc</div>
+                            <div className="mt-3 grid grid-cols-3 gap-2">
+                              <div className="bg-blue-50 rounded-lg p-2 text-center">
+                                <div className="text-[10px] text-blue-600">Total</div>
+                                <div className="text-sm font-semibold text-blue-800">₹{transaction.totalAmount.toLocaleString('en-IN')}</div>
+                              </div>
+                              <div className="bg-green-50 rounded-lg p-2 text-center">
+                                <div className="text-[10px] text-green-600">Paid</div>
+                                <div className="text-sm font-semibold text-green-700">₹{transaction.amountPaid.toLocaleString('en-IN')}</div>
+                              </div>
+                              <div className="bg-red-50 rounded-lg p-2 text-center">
+                                <div className="text-[10px] text-red-600">Pending</div>
+                                <div className="text-sm font-semibold text-red-700">₹{transaction.pendingAmount.toLocaleString('en-IN')}</div>
+                              </div>
+                            </div>
+                            <div className="mt-2 text-[10px] text-gray-500">{transaction.type === 'payment' ? 'Payment' : 'Work Done'}{transaction.paymentDate ? ` • Paid: ${new Date(transaction.paymentDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}</div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
+
+                      {/* Desktop table view */}
+                      <div className="bg-white rounded-xl border border-blue-200 overflow-hidden shadow-lg hidden md:block">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-blue-200">
+                            <thead className="bg-gradient-to-r from-blue-50 to-blue-100">
+                              <tr>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                                  Date
+                                </th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                                  Voucher
+                                </th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                                  Item & Work Done
+                                </th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                                  Amount Details
+                                </th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-blue-700 uppercase tracking-wider">
+                                  Status
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-blue-100">
+                              {getFilteredAndSortedTransactions().map((transaction) => (
+                                <tr key={transaction.id} className="hover:bg-blue-50 transition-colors">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-800">
+                                    {new Date(transaction.actionDate).toLocaleDateString('en-GB', {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric'
+                                    })}
+                                    {transaction.paymentDate && (
+                                      <div className="text-xs text-green-600 font-medium">
+                                        Paid: {new Date(transaction.paymentDate).toLocaleDateString('en-GB', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric'
+                                        })}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-blue-800 font-medium">{transaction.voucherNo}</div>
+                                    {transaction.itemName && (
+                                      <div className="text-xs text-blue-600">{transaction.itemName}</div>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-blue-800">{transaction.jobWorkDone}</div>
+                                    <div className="text-xs text-blue-600">
+                                      {transaction.quantity} pcs × ₹{transaction.pricePerPiece}/pc
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-blue-800">
+                                      Total: ₹{transaction.totalAmount.toLocaleString('en-IN')}
+                                    </div>
+                                    {transaction.amountPaid > 0 && (
+                                      <div className="text-xs text-green-600 font-medium">
+                                        Paid: ₹{transaction.amountPaid.toLocaleString('en-IN')}
+                                      </div>
+                                    )}
+                                    {transaction.pendingAmount > 0 && (
+                                      <div className="text-xs text-red-600 font-medium">
+                                        Pending: ₹{transaction.pendingAmount.toLocaleString('en-IN')}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${transaction.status === 'Paid' ? 'bg-green-100 text-green-800' :
+                                      transaction.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-800' :
+                                        'bg-red-100 text-red-800'
+                                      }`}>
+                                      {transaction.status}
+                                    </span>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {transaction.type === 'payment' ? 'Payment' : 'Work Done'}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </>
                   ) : (
                     <div className="rounded-xl bg-white p-8 border border-blue-200 text-center shadow-lg">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4">

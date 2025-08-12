@@ -300,7 +300,7 @@ export default function VendorKycPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
           <button
-            onClick={() => router.push('/admin-dashboard')}
+            onClick={() => router.back()}
             className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ArrowLeft className="h-5 w-5 mr-2" />
@@ -342,9 +342,8 @@ export default function VendorKycPage() {
                           <li
                             key={vendor.uid}
                             onClick={() => handleSelectVendor(vendor)}
-                            className={`p-3 hover:bg-blue-50 cursor-pointer transition-colors ${
-                              selectedVendor?.uid === vendor.uid ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                            }`}
+                            className={`p-3 hover:bg-blue-50 cursor-pointer transition-colors ${selectedVendor?.uid === vendor.uid ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                              }`}
                           >
                             <div className="flex items-center justify-between">
                               <div>
@@ -352,11 +351,10 @@ export default function VendorKycPage() {
                                 <p className="text-sm text-gray-500">{vendor.companyName || 'No company'}</p>
                                 <p className="text-xs text-gray-400">{vendor.email}</p>
                               </div>
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                                vendor.kycStatus === 'Verified' ? 'bg-green-100 text-green-700' :
-                                vendor.kycStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                'bg-yellow-100 text-yellow-700'
-                              }`}>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${vendor.kycStatus === 'Verified' ? 'bg-green-100 text-green-700' :
+                                  vendor.kycStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                    'bg-yellow-100 text-yellow-700'
+                                }`}>
                                 {vendor.kycStatus || 'Pending'}
                               </span>
                             </div>
@@ -383,11 +381,10 @@ export default function VendorKycPage() {
                           <p className="text-sm text-blue-500">{selectedVendor.companyName ?? 'N/A'}</p>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            selectedVendor.kycStatus === 'Verified' ? 'bg-green-100 text-green-700' :
-                            selectedVendor.kycStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-yellow-100 text-yellow-700'
-                          }`}>
+                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${selectedVendor.kycStatus === 'Verified' ? 'bg-green-100 text-green-700' :
+                              selectedVendor.kycStatus === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                'bg-yellow-100 text-yellow-700'
+                            }`}>
                             KYC: {selectedVendor.kycStatus || 'Pending'}
                           </span>
                           {selectedVendor.kycStatus !== 'Verified' && (
@@ -438,9 +435,8 @@ export default function VendorKycPage() {
                           />
                           <label
                             htmlFor="kycDocument"
-                            className={`flex items-center px-4 py-2 rounded-md text-white cursor-pointer transition-colors ${
-                              uploadingKyc ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
+                            className={`flex items-center px-4 py-2 rounded-md text-white cursor-pointer transition-colors ${uploadingKyc ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
                           >
                             <Upload className="h-4 w-4 mr-2" />
                             {uploadingKyc ? 'Uploading...' : 'Upload Document'}

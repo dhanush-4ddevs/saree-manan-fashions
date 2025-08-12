@@ -498,7 +498,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-blue-50 to-white min-h-screen">
+    <div className="pb-8 bg-gradient-to-br from-blue-50 to-white min-h-screen">
       {/* CSS to hide number input spinner buttons */}
       <style jsx>{`
         input[type="number"]::-webkit-outer-spin-button,
@@ -512,10 +512,10 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
         }
       `}</style>
 
-      <div className="max-w-6xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden p-4">
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="max-w-6xl mx-auto bg-gray-50 rounded-lg overflow-hidden p-2">
+        <form onSubmit={handleSubmit} className="space-y-2">
           {/* Voucher Header */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3 rounded-lg border border-blue-200 mt-6">
             <h3 className="text-lg font-medium text-blue-800 mb-4">VOUCHER INFO</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -550,7 +550,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Sender Details */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3 rounded-lg border border-blue-200 mt-6">
             <h3 className="text-lg font-medium text-blue-800 mb-4">SENDER DETAILS</h3>
             <div>
               <label htmlFor="senderName" className="block text-sm font-medium text-blue-700 mb-1">
@@ -579,7 +579,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Item Details */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3 rounded-lg border border-blue-200 mt-6">
             <h3 className="text-lg font-medium text-blue-800 mb-4">ITEM DETAILS</h3>
 
             {/* Image Upload */}
@@ -595,8 +595,8 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
                   onClick={() => document.getElementById('image-upload')?.click()}
                   disabled={images.length >= 3}
                   className={`inline-flex items-center px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium ${images.length >= 3
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-blue-700 hover:bg-blue-50'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-blue-700 hover:bg-blue-50'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
                 >
                   <Upload className="h-4 w-4 mr-2" />
@@ -763,7 +763,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Job Work and Vendor Details */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3 rounded-lg border border-blue-200 mt-6">
             <div className="mb-4">
               <label htmlFor="jobWork" className="block text-sm font-medium text-blue-700 mb-1">
                 JOB WORK
@@ -902,7 +902,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Transport Details */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3  rounded-lg border border-blue-200 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label htmlFor="lrDate" className="block text-sm font-medium text-blue-700 mb-1">
@@ -947,7 +947,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Comment */}
-          <div className="bg-white p-6 rounded-lg border border-blue-200 mt-6">
+          <div className="bg-white p-3 rounded-lg border border-blue-200 mt-6">
             <label htmlFor="comment" className="block text-sm font-medium text-blue-700 mb-1">
               COMMENT
             </label>
@@ -962,7 +962,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-4 pt-4">
+          <div className="flex justify-end space-x-4 pt-4 pb-4">
             <button
               type="button"
               onClick={handleReset}

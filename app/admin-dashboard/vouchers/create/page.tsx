@@ -223,8 +223,8 @@ function CreateVoucherContent() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 md:p-8 max-w-5xl mx-auto">
-      <div className="flex items-center mb-6 md:mb-8 border-b pb-4">
+    <div className="bg-white rounded-xl shadow-md p-0 md:p-8 max-w-5xl mx-auto">
+      <div className="flex items-center mb-6 md:mb-8 border-b pb-4 p-4">
         {/* <ArrowLeft
           className="h-5 w-5 text-gray-500 mr-3 cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => router.back()}
@@ -233,13 +233,14 @@ function CreateVoucherContent() {
         <h2 className="text-2xl font-bold text-blue-800">Create New Voucher</h2>
       </div>
 
-      <div className="space-y-6 md:space-y-8">
+      <div className="space-y-0 md:space-y-4">
 
 
         <div>
           <VoucherForm
             onSubmit={handleVoucherSubmit}
             editingVoucher={null}
+
             initialVoucherNo={currentVoucherNo}
             isSubmitting={isSubmitting}
             onSuccess={() => {

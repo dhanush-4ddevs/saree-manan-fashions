@@ -1231,8 +1231,8 @@ export default function AddUser() {
         isVisible={isToastVisible}
         onClose={() => setIsToastVisible(false)}
       />
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-0 px-0">
+        <div className="max-w-7xl mx-auto px-0 sm:px-0 lg:px-8">
           {/* Back Button */}
           {/* <button
             onClick={() => router.push('/admin-dashboard')}
@@ -1242,7 +1242,7 @@ export default function AddUser() {
             Back to Dashboard
           </button> */}
 
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-4">
             {/* Add User Form */}
             <div>
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -1255,7 +1255,7 @@ export default function AddUser() {
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-2">
                   {isUserCreated && (
                     <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
                       <div className="flex">
@@ -1335,9 +1335,9 @@ export default function AddUser() {
 
                     {/* User Category */}
                     <div>
-                      <label htmlFor="category" className="block text-sm font-medium text-blue-700 items-center">
+                      <label htmlFor="category" className=" text-sm font-medium inline-flex text-blue-700 items-center ml-2">
                         <Users className="h-5 w-5 mr-2 text-blue-500" />
-                        User Category <span className="text-red-500 ml-1">*</span>
+                        User Category <span className="text-red-500 ml-[1px]">*</span>
                       </label>
                       <select
                         id="category"
@@ -1357,7 +1357,7 @@ export default function AddUser() {
                     </div>
 
                     {/* Basic Information */}
-                    <div className={`p-4 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
+                    <div className={`p-2 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
                       <h3 className={`text-lg font-medium mb-4 flex items-center ${isFieldsDisabled ? 'text-gray-500' : 'text-blue-800'}`}>
                         <User className={`h-5 w-5 mr-2 ${isFieldsDisabled ? 'text-gray-400' : 'text-blue-600'}`} />
                         Basic Information
@@ -1406,7 +1406,7 @@ export default function AddUser() {
                     </div>
 
                     {/* Contact Information */}
-                    <div className={`p-4 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
+                    <div className={`p-2 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
                       <h3 className={`text-lg font-medium mb-4 flex items-center ${isFieldsDisabled ? 'text-gray-500' : 'text-blue-800'}`}>
                         <Phone className={`h-5 w-5 mr-2 ${isFieldsDisabled ? 'text-gray-400' : 'text-blue-600'}`} />
                         Contact Information
@@ -1474,7 +1474,7 @@ export default function AddUser() {
                     </div>
 
                     {/* Address Information */}
-                    <div className={`p-4 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
+                    <div className={`p-2 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
                       <h3 className={`text-lg font-medium mb-4 flex items-center ${isFieldsDisabled ? 'text-gray-500' : 'text-blue-800'}`}>
                         <MapPin className={`h-5 w-5 mr-2 ${isFieldsDisabled ? 'text-gray-400' : 'text-blue-600'}`} />
                         Address Information
@@ -2029,7 +2029,7 @@ export default function AddUser() {
                     )}
 
                     {/* Password (Optional) */}
-                    <div className={`p-4 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
+                    <div className={`p-2 rounded-lg border ${isFieldsDisabled ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}`}>
                       <h3 className={`text-lg font-medium mb-4 flex items-center ${isFieldsDisabled ? 'text-gray-500' : 'text-blue-800'}`}>
                         <Key className={`h-5 w-5 mr-2 ${isFieldsDisabled ? 'text-gray-400' : 'text-blue-600'}`} />
                         Password (Optional)
