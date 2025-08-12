@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "backup": "node scripts/daily-backup.js",
+    "backup:date": "node scripts/daily-backup.js",
+    "backup:range": "node scripts/date-range-backup.js",
+    "backup:test": "node scripts/test-backup.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.6",

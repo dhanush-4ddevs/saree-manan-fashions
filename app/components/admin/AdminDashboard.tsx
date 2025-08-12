@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ListChecks, Users, Clock, LayoutDashboard, FileText, UserPlus, Settings, LogOut, ChevronDown, ChevronRight, IndianRupee, Plus, User, Check, Menu, X, Search, CreditCard, CheckCircle, RefreshCw, Printer, ArrowLeft, Info } from 'lucide-react';
+import { ListChecks, Users, Clock, LayoutDashboard, FileText, UserPlus, Settings, LogOut, ChevronDown, ChevronRight, IndianRupee, Plus, User, Check, Menu, X, Search, CreditCard, CheckCircle, RefreshCw, Printer, ArrowLeft, Info, Database } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AllVouchers from '@/components/shared/AllVouchers';
 import AddUser from '@/admin-dashboard/add-user/page';
@@ -18,6 +18,7 @@ import AdminNavbar from '@/admin-dashboard/AdminNavbar';
 import { jsPDF } from 'jspdf';
 import autoTable, { HookData } from 'jspdf-autotable';
 import AdminPaymentComponent from './AdminPaymentComponent';
+import BackupManager from './BackupManager';
 
 // Add type declarations for jsPDF with autoTable
 declare module 'jspdf' {
@@ -42,7 +43,8 @@ export default function AdminDashboard() {
   // Initialize all menus as collapsed by default
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({
     'User Management': false,
-    'Voucher Management': false
+    'Voucher Management': false,
+    'System Management': false
   });
   const [userData, setUserData] = useState<any>(null);
   const [dashboardStats, setDashboardStats] = useState({
@@ -265,6 +267,14 @@ export default function AdminDashboard() {
       ]
     },
     {
+      name: 'System Management',
+      icon: Settings,
+      isCategory: true,
+      subItems: [
+        { name: 'Backup Management', icon: Database }
+      ]
+    },
+    {
       name: 'Accounts',
       icon: IndianRupee,
       isCategory: false
@@ -286,6 +296,11 @@ export default function AdminDashboard() {
         { name: 'Create New Voucher', icon: Plus },
         { name: 'All Vouchers', icon: ListChecks },
         { name: 'Receive Vouchers', icon: Check }
+      ]
+    },
+    {
+      name: 'System', icon: Settings, hasSubMenu: true, subItems: [
+        { name: 'Backup Management', icon: Database }
       ]
     },
     { name: 'Accounts', icon: IndianRupee },
@@ -403,6 +418,8 @@ export default function AdminDashboard() {
       router.push('/admin-dashboard?tab=All Vouchers');
     } else if (subItemName === 'Receive Vouchers') {
       router.push('/admin-dashboard/completion-requests');
+    } else if (subItemName === 'Backup Management') {
+      setActivePage('Backup Management');
     }
   };
 
@@ -515,6 +532,20 @@ export default function AdminDashboard() {
           );
         case 'Accounts':
           return <AdminPaymentComponent />;
+        case 'Backup Management':
+          return (
+            <div>
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-blue-800">Backup Management</h1>
+                <p className="text-blue-600 mt-1">
+                  Export and import daily backups of voucher data and images.
+                </p>
+              </div>
+              <div className="bg-white shadow-md rounded-lg border border-blue-100">
+                <BackupManager />
+              </div>
+            </div>
+          );
         default:
           return null;
       }
@@ -814,7 +845,9 @@ export default function AdminDashboard() {
           <div className="bg-white border-b border-blue-200 shadow-lg">
             <div className="p-4">
               <div className="text-sm font-medium text-blue-600 mb-3">
-                {mobileSubMenuOpen === 'Users' ? 'User Management' : 'Voucher Management'}
+                {mobileSubMenuOpen === 'Users' ? 'User Management' :
+                 mobileSubMenuOpen === 'Vouchers' ? 'Voucher Management' :
+                 mobileSubMenuOpen === 'System' ? 'System Management' : 'Menu'}
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {mobileMenuItems.find(item => item.name === mobileSubMenuOpen)?.subItems?.map((subItem) => {
@@ -841,6 +874,7 @@ export default function AdminDashboard() {
             const isActive = (item.name === 'Dashboard' && activePage === 'Dashboard') ||
               (item.name === 'Users' && activePage.includes('User')) ||
               (item.name === 'Vouchers' && activePage.includes('Voucher')) ||
+              (item.name === 'System' && activePage.includes('Backup')) ||
               (item.name === 'Accounts' && activePage === 'Accounts') ||
               (item.name === 'Profile' && activePage === 'My Profile') ||
               (mobileSubMenuOpen === item.name);

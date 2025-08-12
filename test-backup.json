@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "createdAt": "2025-08-12T13:09:19.079Z",
+    "dateRange": {
+      "start": "2025-08-11T18:30:00.000Z",
+      "end": "2025-08-12T18:29:59.999Z"
+    },
+    "summary": {
+      "totalVouchers": 0,
+      "totalImages": 0,
+      "totalUsers": 0,
+      "totalEvents": 0
+    },
+    "firebaseConfig": {
+      "projectId": "",
+      "storageBucket": ""
+    }
+  },
+  "vouchers": [],
+  "users": [],
+  "images": {}
+}
