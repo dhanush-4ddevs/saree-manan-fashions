@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getAllJobWorks, JobWork } from '@/config/firebase';
 
 export const useJobWorks = () => {
@@ -24,7 +24,7 @@ export const useJobWorks = () => {
     fetchJobWorks();
   }, []);
 
-  const jobWorkNames = jobWorks.map(jobWork => jobWork.name);
+  const jobWorkNames = useMemo(() => jobWorks.map(jobWork => jobWork.name), [jobWorks]);
 
   return {
     jobWorks,

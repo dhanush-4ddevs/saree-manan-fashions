@@ -2109,6 +2109,14 @@ export default function AddUser() {
                       </button>
                     </div>
 
+                    {/* Success Message - Below Create User Button */}
+                    {isUserCreated && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+                        <p className="font-medium">User created successfully!</p>
+                        <p className="text-sm mt-1">The user has been added to the system and can now log in.</p>
+                      </div>
+                    )}
+
                     {/* Error Messages - Below Create User Button */}
                     {error && (
                       <div ref={errorMessageRef} className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
