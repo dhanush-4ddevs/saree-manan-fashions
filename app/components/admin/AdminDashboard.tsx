@@ -274,16 +274,20 @@ export default function AdminDashboard() {
   // Mobile menu items - simplified version for the dock
   const mobileMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard },
-    { name: 'Users', icon: Users, hasSubMenu: true, subItems: [
-      { name: 'Add User', icon: UserPlus },
-      { name: 'List Users', icon: Users },
-      { name: 'My Profile', icon: User }
-    ]},
-    { name: 'Vouchers', icon: FileText, hasSubMenu: true, subItems: [
-      { name: 'Create New Voucher', icon: Plus },
-      { name: 'All Vouchers', icon: ListChecks },
-      { name: 'Receive Vouchers', icon: Check }
-    ]},
+    {
+      name: 'Users', icon: Users, hasSubMenu: true, subItems: [
+        { name: 'Add User', icon: UserPlus },
+        { name: 'List Users', icon: Users },
+        { name: 'My Profile', icon: User }
+      ]
+    },
+    {
+      name: 'Vouchers', icon: FileText, hasSubMenu: true, subItems: [
+        { name: 'Create New Voucher', icon: Plus },
+        { name: 'All Vouchers', icon: ListChecks },
+        { name: 'Receive Vouchers', icon: Check }
+      ]
+    },
     { name: 'Accounts', icon: IndianRupee },
     { name: 'Profile', icon: User, action: () => handleProfileClick() }
   ];
@@ -303,6 +307,19 @@ export default function AdminDashboard() {
     if (pageName !== activePage) {
       setPageHistory(prev => [...prev, activePage]);
       setActivePage(pageName);
+    }
+
+    // Close dropdowns/expanded menus when navigating to top-level sections
+    if (['Dashboard', 'Accounts', 'My Profile'].includes(pageName)) {
+      setExpandedMenus(prevState => {
+        const collapsed: { [key: string]: boolean } = {};
+        Object.keys(prevState).forEach(key => {
+          collapsed[key] = false;
+        });
+        return collapsed;
+      });
+      // Close any open mobile sub-menu
+      setMobileSubMenuOpen(null);
     }
   };
 
@@ -360,7 +377,7 @@ export default function AdminDashboard() {
     } else if (item.action) {
       item.action();
     } else if (item.name === 'Dashboard') {
-      setActivePage('Dashboard');
+      navigateTo('Dashboard');
     } else if (item.name === 'Accounts') {
       handleAccountsClick();
     }
@@ -564,8 +581,8 @@ export default function AdminDashboard() {
                                   <button
                                     onClick={() => handleSubItemClick(subItem.name)}
                                     className={`flex items-center w-full px-4 py-2 text-sm rounded-md transition-colors ${activePage === subItem.name
-                                        ? 'bg-blue-50 text-blue-600'
-                                        : 'text-blue-600 hover:bg-blue-50'
+                                      ? 'bg-blue-50 text-blue-600'
+                                      : 'text-blue-600 hover:bg-blue-50'
                                       }`}
                                   >
                                     <SubIcon className="h-4 w-4 mr-3" />
@@ -581,8 +598,8 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => item.name === 'Accounts' ? handleAccountsClick() : navigateTo(item.name)}
                         className={`flex items-center w-full px-4 py-2 rounded-md transition-colors ${activePage === item.name
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'text-blue-600 hover:bg-blue-50'
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'text-blue-600 hover:bg-blue-50'
                           }`}
                       >
                         <Icon className="h-5 w-5 mr-3" />
@@ -593,6 +610,17 @@ export default function AdminDashboard() {
                 );
               })}
             </ul>
+
+            {/* Desktop logout button */}
+            <div className="mt-8 hidden md:block">
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2 rounded-md text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <LogOut className="h-5 w-5 mr-3" />
+                <span>Logout</span>
+              </button>
+            </div>
 
             {/* Mobile-only logout button */}
             <div className="mt-8 md:hidden">
@@ -822,8 +850,8 @@ export default function AdminDashboard() {
                 key={item.name}
                 onClick={() => handleMobileMenuClick(item)}
                 className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive
-                    ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
-                    : 'text-blue-400 hover:bg-blue-50'
+                  ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
+                  : 'text-blue-400 hover:bg-blue-50'
                   }`}
               >
                 <div className={`relative ${isActive ? 'scale-110 -translate-y-1' : ''} transition-transform duration-200`}>

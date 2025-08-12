@@ -229,7 +229,7 @@ function CreateVoucherContent() {
           className="h-5 w-5 text-gray-500 mr-3 cursor-pointer hover:text-blue-600 transition-colors"
           onClick={() => router.back()}
         /> */}
-        <PlusCircle className="h-6 w-6 text-blue-600 mr-3" />
+
         <h2 className="text-2xl font-bold text-blue-800">Create New Voucher</h2>
       </div>
 
