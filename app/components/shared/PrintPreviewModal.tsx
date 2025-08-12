@@ -59,6 +59,25 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
         }
     };
 
+    const handleDownloadFirstPage = async () => {
+        if (!voucher || !pdfUrl) return;
+
+        try {
+            const doc = await printSingleVoucher(voucher);
+            const totalPages = (doc as any).getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal?.getNumberOfPages?.();
+            if (typeof totalPages === 'number' && totalPages > 1) {
+                for (let i = totalPages; i >= 2; i--) {
+                    // Keep only the first page
+                    doc.deletePage(i);
+                }
+            }
+            doc.save(`voucher-${voucher.voucher_no}-p1.pdf`);
+        } catch (err) {
+            console.error('Error downloading first page PDF:', err);
+            alert('Failed to download first page. Please try again.');
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status?.toLowerCase()) {
             case 'dispatched':
@@ -104,6 +123,15 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
                             <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 lg:mr-2" />
                             <span className="hidden sm:inline">Download PDF</span>
                             <span className="sm:hidden">Download</span>
+                        </button>
+                        <button
+                            onClick={handleDownloadFirstPage}
+                            disabled={!pdfUrl || loading}
+                            className="flex items-center px-2 sm:px-3 lg:px-4 xl:px-6 py-1.5 sm:py-2 lg:py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs sm:text-sm lg:text-base font-medium"
+                        >
+                            <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 lg:mr-2" />
+                            <span className="hidden sm:inline">Print 1 page</span>
+                            <span className="sm:hidden">1 page</span>
                         </button>
                         <button
                             onClick={onClose}
