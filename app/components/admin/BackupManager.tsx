@@ -86,8 +86,6 @@ export default function BackupManager() {
 
   return (
     <div className="space-y-6">
-
-
       {/* Export + Import cards side-by-side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Single Export Section */}
@@ -99,9 +97,23 @@ export default function BackupManager() {
             </h3>
           </div>
           <div className="p-6 space-y-4">
-            <p className="text-sm text-gray-600">
-              Exports all vouchers, related users, and images up to the current second.
-            </p>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+              <h4 className="text-sm font-medium text-blue-800 mb-3">About This Backup</h4>
+              <ul className="text-sm space-y-2">
+                <li className="flex items-start">
+                  <Shield className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-blue-700">Creates a complete backup including all vouchers, user profiles, and images up to the current moment.</p>
+                </li>
+                <li className="flex items-start">
+                  <Download className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-blue-700">Downloaded file can be used in the import section to restore your data at any time.</p>
+                </li>
+                <li className="flex items-start">
+                  <Clock className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="text-blue-700">Backup files are automatically named with date and time for easy tracking.</p>
+                </li>
+              </ul>
+            </div>
             <button
               onClick={exportAllUntilNow}
               disabled={isExporting}

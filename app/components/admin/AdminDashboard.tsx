@@ -547,7 +547,7 @@ export default function AdminDashboard() {
                   Export and import daily backups of voucher data and images.
                 </p>
               </div>
-              <div className="bg-white shadow-md rounded-lg border border-blue-100">
+              <div className="bg-blue-50/80 rounded-lg border border-blue-100">
                 <BackupManager />
               </div>
             </div>
@@ -561,7 +561,7 @@ export default function AdminDashboard() {
                   Backup data and perform system-wide maintenance actions.
                 </p>
               </div>
-              <div className="bg-white shadow-md rounded-lg border border-blue-100 md:p-6">
+              <div className="bg-blue-50/80 shadow-md rounded-lg border border-blue-100 md:p-6">
                 <SystemSettings />
               </div>
             </div>
