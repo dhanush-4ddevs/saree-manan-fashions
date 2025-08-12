@@ -18,6 +18,7 @@ export function LoginForm() {
   const [authLoading, setAuthLoading] = useState(true);
   const [requirePasswordChange, setRequirePasswordChange] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // Forgot password modal state
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
@@ -25,6 +26,7 @@ export function LoginForm() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [forgotPhoneError, setForgotPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -50,9 +52,31 @@ export function LoginForm() {
     checkAuth();
   }, [router, pathname]);
 
+  const validatePhoneRealTime = (value: string): string | null => {
+    if (!value) return null;
+    if (!/^\d+$/.test(value)) return 'Only numbers are allowed.';
+    if (!/^[6-9]/.test(value[0])) return 'Phone number must start with 6, 7, 8, or 9.';
+    if (value.length < 10) {
+      const remaining = 10 - value.length;
+      return `Enter ${remaining} more digit${remaining > 1 ? 's' : ''}.`;
+    }
+    return null;
+  };
+
+  const isValidPhoneNumber = (value: string): boolean => {
+    return /^\d{10}$/.test(value) && /^[6-9]/.test(value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate phone before submit
+    if (!isValidPhoneNumber(phone)) {
+      setError('Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -99,6 +123,11 @@ export function LoginForm() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setForgotPasswordError('');
+    // Validate before triggering request
+    if (!isValidPhoneNumber(forgotPasswordPhone)) {
+      setForgotPasswordError('Please enter a valid 10-digit phone number starting with 6, 7, 8, or 9.');
+      return;
+    }
     setForgotPasswordLoading(true);
 
     try {
@@ -177,15 +206,25 @@ export function LoginForm() {
                 maxLength={10}
                 required
                 value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/[\s\t]/g, ''))}
+                onChange={(e) => {
+                  const numeric = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                  setPhone(numeric);
+                  setPhoneError(validatePhoneRealTime(numeric));
+                }}
                 onKeyDown={(e) => {
                   if (e.key === ' ' || e.key === 'Tab') {
                     e.preventDefault();
                   }
                 }}
-                className="appearance-none block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${phoneError ? 'border-red-500 bg-red-50' : (phone && isValidPhoneNumber(phone) ? 'border-green-500 bg-green-50' : 'border-gray-300')}`}
                 placeholder="Enter your phone number"
               />
+              {phoneError && (
+                <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+              )}
+              {!phoneError && phone.length === 10 && isValidPhoneNumber(phone) && (
+                <p className="mt-1 text-sm text-green-600">✓ Valid phone number</p>
+              )}
             </div>
           </div>
 
@@ -226,7 +265,7 @@ export function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !!phoneError || !isValidPhoneNumber(phone)}
             className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50"
           >
             <LogIn className="h-4 w-4 mr-2" />
@@ -290,17 +329,23 @@ export function LoginForm() {
                       onChange={(e) => {
                         const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
                         setForgotPasswordPhone(value);
+                        setForgotPhoneError(validatePhoneRealTime(value));
                       }}
                       onKeyDown={(e) => {
                         if (e.key === ' ' || e.key === 'Tab') {
                           e.preventDefault();
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${forgotPhoneError ? 'border-red-500 bg-red-50' : (forgotPasswordPhone && isValidPhoneNumber(forgotPasswordPhone) ? 'border-green-500 bg-green-50' : 'border-gray-300')}`}
                       placeholder="Enter your phone number"
                       maxLength={10}
                       required
                     />
+                    {forgotPhoneError && (
+                      <div className="text-red-600 text-sm bg-red-50 p-2 rounded mt-2">
+                        {forgotPhoneError}
+                      </div>
+                    )}
                   </div>
 
                   {forgotPasswordError && (
@@ -320,7 +365,7 @@ export function LoginForm() {
                     </button>
                     <button
                       type="submit"
-                      disabled={forgotPasswordLoading}
+                      disabled={forgotPasswordLoading || !!forgotPhoneError || !isValidPhoneNumber(forgotPasswordPhone)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                     >
                       {forgotPasswordLoading ? (
