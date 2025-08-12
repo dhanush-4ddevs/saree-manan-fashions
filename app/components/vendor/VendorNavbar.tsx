@@ -22,6 +22,7 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
   const pathname = usePathname() || '';
   const [vendorData, setVendorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeProfileTab, setActiveProfileTab] = useState<string | null>(null);
 
   // Always keep menu visible, especially on desktop
   const [menuVisible, setMenuVisible] = useState(true);
@@ -46,7 +47,26 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
   // Ensure menu stays visible when changing routes
   useEffect(() => {
     setMenuVisible(true);
+    // Sync active profile tab from localStorage when route changes
+    try {
+      const storedTab = typeof window !== 'undefined' ? localStorage.getItem('activeProfileTab') : null;
+      setActiveProfileTab(storedTab);
+    } catch { }
   }, [pathname]);
+
+  // Listen for localStorage changes (e.g., across tabs)
+  useEffect(() => {
+    const handleStorage = () => {
+      try {
+        const storedTab = localStorage.getItem('activeProfileTab');
+        setActiveProfileTab(storedTab);
+      } catch { }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+      return () => window.removeEventListener('storage', handleStorage);
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -94,9 +114,18 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
     if (action === 'account-tab') {
       // Set the active tab to 'account' in localStorage
       localStorage.setItem('activeProfileTab', 'account');
+      setActiveProfileTab('account');
       // Always navigate when there's an action, even if on same path
       router.push(path);
       return;
+    }
+
+    // Navigating directly to My Profile should clear any stored sub-tab
+    if (path === '/vendor/my-profile') {
+      try {
+        localStorage.removeItem('activeProfileTab');
+        setActiveProfileTab(null);
+      } catch { }
     }
 
     if (path === pathname) return;
@@ -180,11 +209,10 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
                   <li key={item.name}>
                     <button
                       onClick={() => handleMenuClick(item.path, item.action)}
-                      className={`flex items-center w-full px-4 py-2 rounded-md transition-colors ${
-                        pathname === item.path || pathname.startsWith(`${item.path}/`)
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-blue-600 hover:bg-blue-50'
-                      }`}
+                      className={`flex items-center w-full px-4 py-2 rounded-md transition-colors ${pathname === item.path || pathname.startsWith(`${item.path}/`)
+                        ? 'bg-blue-50 text-blue-600'
+                        : 'text-blue-600 hover:bg-blue-50'
+                        }`}
                     >
                       <Icon className="h-5 w-5 mr-3 flex-shrink-0" />
                       <span className="whitespace-nowrap">{item.name}</span>
@@ -203,23 +231,39 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
           </div>
         </div>
 
-        {/* Mobile Menu - Bottom dock style */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 shadow-lg md:hidden z-10">
-          <div className="flex justify-around">
+        {/* Mobile Menu - Bottom dock style (match AdminDashboard) */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-blue-200 shadow-lg z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex justify-around items-center h-16">
             {menuItems.map((item) => {
               const Icon = item.icon;
+
+              const isActive = (() => {
+                // Base active when matching path
+                const baseActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+                // Special handling so Accounts and My Profile don't both appear active
+                if (item.action === 'account-tab') {
+                  return pathname === '/vendor/my-profile' && activeProfileTab === 'account';
+                }
+                if (item.name === 'My Profile' && pathname === '/vendor/my-profile') {
+                  return activeProfileTab !== 'account';
+                }
+                return baseActive;
+              })();
+
               return (
                 <button
                   key={item.name}
                   onClick={() => handleMenuClick(item.path, item.action)}
-                  className={`flex flex-col items-center justify-center py-3 px-2 ${
-                    pathname === item.path || pathname.startsWith(`${item.path}/`)
-                      ? 'text-blue-600'
-                      : 'text-gray-600'
-                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`group relative flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive
+                    ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
+                    : 'text-blue-400 hover:bg-blue-50'
+                    }`}
                 >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs mt-1">{item.name}</span>
+                  <div className={`relative ${isActive ? 'scale-110 -translate-y-1' : ''} transition-transform duration-200`}>
+                    <Icon className={`h-6 w-6 ${isActive ? 'text-blue-600' : 'text-blue-400'}`} strokeWidth={isActive ? 2.5 : 2} />
+                  </div>
+                  <span className={`mt-1 text-[11px] leading-3 ${isActive ? 'font-semibold' : ''}`}>{item.name}</span>
                 </button>
               );
             })}

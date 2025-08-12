@@ -1225,7 +1225,7 @@ export default function MyProfile() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-4">
       <div className="max-w-7xl mx-auto px-0 lg:px-8">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden p-2 lg:p-4">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden p-0 ">
           {/* Enhanced Header */}
           <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 py-6 px-4 sm:py-8 sm:px-8">
             {/* Mobile header (image left of heading) */}

@@ -558,7 +558,7 @@ export default function ReceiveReport() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-blue-100 p-4">
+    <div className="bg-white rounded-lg shadow-md border border-blue-100 p-0">
       <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-center">
         <FileText className="h-6 w-6 mr-2" />
         <h1 className="text-2xl font-bold text-center">VOUCHERS TO BE RECEIVED</h1>
@@ -571,8 +571,8 @@ export default function ReceiveReport() {
         </div>
       ) : (
         <>
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="space-y-0">
+            <div className="bg-gray-50 p-4 border border-gray-200">
               <div className="flex flex-wrap gap-4 items-center justify-between">
                 <div className="flex-1 min-w-64 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -640,7 +640,7 @@ export default function ReceiveReport() {
 
             {/* Main tables (pending/received) */}
             {/* To Be Received Table */}
-            <div className="relative border border-blue-200 rounded-lg overflow-auto max-h-[70vh] pl-8">
+            <div className="relative border border-blue-200 overflow-auto max-h-[70vh] pl-0">
               <table className="min-w-full bg-white">
                 <thead className="bg-blue-50 sticky top-0 z-10">
                   <tr>
