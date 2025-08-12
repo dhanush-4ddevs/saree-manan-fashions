@@ -314,7 +314,7 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-50 border border-blue-100">
+          <div className="fixed left-2 right-2 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mt-2 w-auto sm:w-80 bg-white rounded-md shadow-lg z-[9999] border border-blue-100">
             <div className="p-3 bg-blue-600 text-white font-medium rounded-t-md flex justify-between items-center">
               <span>Notifications</span>
               <div className="flex items-center space-x-2">
@@ -340,7 +340,7 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
                 )}
               </div>
             </div>
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-[70vh] sm:max-h-96 overflow-y-auto">
               {sortedGroups.length > 0 ? (
                 <div className="divide-y divide-blue-100">
                   {sortedGroups.map(([voucherNo, group]) => {
@@ -349,9 +349,8 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
                       <div
                         key={voucherNo}
                         onClick={e => handleNotificationClick(latest, e)}
-                        className={`p-4 cursor-pointer hover:bg-blue-50 transition-all duration-300 ${
-                          latest.read ? 'bg-white' : 'bg-blue-50'
-                        }`}
+                        className={`p-4 cursor-pointer hover:bg-blue-50 transition-all duration-300 ${latest.read ? 'bg-white' : 'bg-blue-50'
+                          }`}
                       >
                         <div className="flex items-start">
                           <div className="mr-3 mt-1">
