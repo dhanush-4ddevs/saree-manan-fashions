@@ -1413,12 +1413,12 @@ export default function MyProfile() {
             </div>
           )}
 
-          <div className="p-3 lg:p-4">
+          <div className="p-1 lg:p-4 pt-2">
             {/* Personal Details Tab */}
             {activeTab === 'personal' && userData && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
-                  <User className="h-6 w-6 mr-3 text-blue-600" />
+                <h2 className="text-2xl pt-2 pl-2 font-bold text-gray-800 mb-4 flex items-center">
+                  <User className="h-6 w-6 mr-1 text-blue-600" />
                   Personal Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-6">
@@ -1485,7 +1485,7 @@ export default function MyProfile() {
             {activeTab === 'kyc' && userData && (
               <div>
                 <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <h2 className="text-xl font-bold text-gray-800 flex items-center">
                     <Shield className="h-6 w-6 mr-3 text-blue-600" />
                     KYC Documents
                   </h2>
@@ -1493,7 +1493,7 @@ export default function MyProfile() {
                     <button
                       onClick={saveKycDocuments}
                       disabled={saving}
-                      className="flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-blue-300 disabled:to-blue-400 transition-all duration-200 shadow-lg"
+                      className="flex items-center px-3 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-blue-300 disabled:to-blue-400 transition-all duration-200 shadow-lg"
                     >
                       {saving ? (
                         <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
@@ -1536,7 +1536,7 @@ export default function MyProfile() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-6">
                   {/* Photo */}
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-3">Photo</h3>
@@ -1887,14 +1887,14 @@ export default function MyProfile() {
             {/* Account Tab */}
             {activeTab === 'account' && userData && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 pl-3 p-2 flex items-center">
                   <CreditCard className="h-6 w-6 mr-3 text-blue-600" />
                   My Account
                 </h2>
 
                 {/* Payment Summary Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 sm:p-8 rounded-xl border border-blue-200 mb-8">
-                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 sm:p-8 rounded-xl border border-blue-200 mb-8">
+                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center pt-4 pl-2">
                     <IndianRupee className="h-5 w-5 mr-2" />
                     Payment Summary
                   </h3>
@@ -1922,8 +1922,8 @@ export default function MyProfile() {
                 </div>
 
                 {/* All Transactions Section */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 sm:p-8 rounded-xl border border-blue-200">
-                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 sm:p-8 rounded-xl border border-blue-200">
+                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center pt-4 pl-2">
                     <Package className="h-5 w-5 mr-2" />
                     All Transactions
                   </h3>
