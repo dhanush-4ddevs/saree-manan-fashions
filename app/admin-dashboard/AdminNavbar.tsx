@@ -201,6 +201,18 @@ const AdminNavbar = ({
             {/* Notification Bell on mobile */}
             {currentAdmin && <NotificationBell userId={currentAdmin.uid} iconColor="text-white" />}
 
+            {/* Mobile logout button */}
+            {handleLogout && (
+              <button
+                onClick={handleLogout}
+                className="text-white p-2"
+                aria-label="Logout"
+                title="Logout"
+              >
+                <LogOut className="h-6 w-6" />
+              </button>
+            )}
+
             {setIsSidebarOpen && !hideMobileMenu && (
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}

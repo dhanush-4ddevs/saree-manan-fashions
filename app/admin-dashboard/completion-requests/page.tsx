@@ -223,9 +223,16 @@ function CompletionRequestsPageContent() {
               </button>
             </div>
 
-            {/* Mobile menu toggle */}
+            {/* Mobile actions */}
             <div className="md:hidden flex items-center">
-              {/* Remove mobile menu button since we're using inline sub-menus */}
+              <button
+                onClick={handleLogout}
+                className="text-white p-2"
+                aria-label="Logout"
+                title="Logout"
+              >
+                <LogOut className="h-6 w-6" />
+              </button>
             </div>
           </div>
         </div>
