@@ -572,13 +572,13 @@ export default function AdminReceiveVoucher() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md border border-blue-100 p-4">
-      <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-md border border-blue-100  lg:p-4">
+      <div className="p-3 sm:p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center items-start justify-between">
         <div className="flex items-center">
           <FileText className="h-6 w-6 mr-2" />
-          <h1 className="text-2xl font-bold">ADMIN RECEIVE VOUCHERS</h1>
+          <h1 className="text-xl sm:text-2xl p-2 font-bold">ADMIN RECEIVE VOUCHERS</h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
           {/* Summary Statistics */}
           {/* <div className="flex items-center gap-4 text-sm">
             <div className="flex items-center gap-2">
@@ -593,7 +593,7 @@ export default function AdminReceiveVoucher() {
           <button
             onClick={handleForceRefresh}
             disabled={refreshing}
-            className="flex items-center px-4 py-2 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-500 rounded-md transition-colors"
+            className="flex items-center justify-center px-4 py-2 bg-blue-700 hover:bg-blue-800 disabled:bg-blue-500 rounded-md transition-colors w-full sm:w-auto"
           >
             <RotateCcw className={`h-5 w-5 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Refreshing...' : 'Refresh'}
@@ -609,8 +609,8 @@ export default function AdminReceiveVoucher() {
       {adminUid && allVouchers.length > 0 && (
         <>
           {/* Search and Filter Controls */}
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-            <div className="flex flex-wrap gap-4 items-center">
+          <div className="mb-4 p-2 sm:p-4 bg-gray-50 rounded-lg">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between">
               {/* Search */}
               <div className="flex-1 min-w-[200px]">
                 <div className="relative">
@@ -625,7 +625,7 @@ export default function AdminReceiveVoucher() {
                         // Trigger search on Enter key
                       }
                     }}
-                    className={`w-full pl-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!showFilters ? 'pr-20' : 'pr-4'}`}
+                    className={`w-full pl-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${!showFilters ? 'pr-24 sm:pr-20' : 'pr-10 sm:pr-4'}`}
                   />
                   {!showFilters && (
                     <button
@@ -640,7 +640,7 @@ export default function AdminReceiveVoucher() {
                   {searchTerm && (
                     <button
                       onClick={clearSearch}
-                      className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 ${!showFilters ? 'right-16' : 'right-3'}`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 ${!showFilters ? 'right-20 sm:right-16' : 'right-10 sm:right-3'}`}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -648,49 +648,51 @@ export default function AdminReceiveVoucher() {
                 </div>
               </div>
 
-              {/* Filter Toggle */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </button>
-
-              {/* Sort Menu */}
-              <div className="relative">
+              {/* Right controls: Filters + Sort */}
+              <div className="flex items-center gap-2 sm:gap-3 justify-end w-full sm:w-auto">
+                {/* Filter Toggle */}
                 <button
-                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
                 >
-                  <ArrowUpDown className="h-4 w-4 mr-2" />
-                  Sort
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
                 </button>
-                {showSortMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
-                    <div className="p-2">
-                      <div className="text-sm font-medium text-gray-700 mb-2">Sort by:</div>
-                      {[
-                        { field: 'created_at', label: 'Voucher Date' },
-                        { field: 'voucher_no', label: 'Voucher No' },
-                        { field: 'item_details.item_name', label: 'Item' }
-                      ].map(({ field, label }) => (
-                        <button
-                          key={field}
-                          onClick={() => {
-                            setSortField(field);
-                            setSortDirection(sortField === field && sortDirection === 'asc' ? 'desc' : 'asc');
-                            setShowSortMenu(false);
-                          }}
-                          className={`w-full text-left px-2 py-1 rounded text-sm ${sortField === field ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
-                            }`}
-                        >
-                          {label} {sortField === field && (sortDirection === 'asc' ? <SortAsc className="inline h-3 w-3" /> : <SortDesc className="inline h-3 w-3" />)}
-                        </button>
-                      ))}
+
+                {/* Sort Menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className="flex items-center px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    Sort
+                  </button>
+                  {showSortMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-20">
+                      <div className="p-2">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Sort by:</div>
+                        {[
+                          { field: 'created_at', label: 'Voucher Date' },
+                          { field: 'voucher_no', label: 'Voucher No' },
+                          { field: 'item_details.item_name', label: 'Item' }
+                        ].map(({ field, label }) => (
+                          <button
+                            key={field}
+                            onClick={() => {
+                              setSortField(field);
+                              setSortDirection(sortField === field && sortDirection === 'asc' ? 'desc' : 'asc');
+                              setShowSortMenu(false);
+                            }}
+                            className={`w-full text-left px-2 py-1 rounded text-sm ${sortField === field ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'}`}
+                          >
+                            {label} {sortField === field && (sortDirection === 'asc' ? <SortAsc className="inline h-3 w-3" /> : <SortDesc className="inline h-3 w-3" />)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
@@ -757,8 +759,8 @@ export default function AdminReceiveVoucher() {
             )}
           </div>
 
-          {/* Vouchers Table */}
-          <div className="relative border border-blue-200 rounded-lg overflow-auto max-h-[70vh]">
+          {/* Vouchers Table - Desktop */}
+          <div className="hidden lg:block relative border p-2 lg:p-0 border-blue-200 rounded-lg overflow-auto max-h-[70vh]">
             <div className="p-4 bg-blue-50 border-b border-blue-200">
               <h2 className="text-lg font-semibold text-blue-800 flex items-center">
                 <Clock className="h-5 w-5 mr-2" />
@@ -814,6 +816,82 @@ export default function AdminReceiveVoucher() {
             </table>
           </div>
 
+          {/* Vouchers Cards - Mobile/Tablet */}
+          <div className="block lg:hidden p-2">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md mb-3">
+              <h2 className="text-base sm:text-lg font-semibold text-blue-800 flex items-center">
+                <Clock className="h-5 w-5 mr-2" />
+                PENDING VOUCHERS TO RECEIVE ({filteredVouchers.length})
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {filteredVouchers.flatMap((voucher) => {
+                const pendingEvents = getPendingForwardEvents(voucher);
+                return pendingEvents.map((event) => {
+                  const senderId = event.details.sender_id || '';
+                  return (
+                    <div key={`${voucher.id}-${event.event_id}`} className="bg-white border border-blue-200 rounded-md shadow-sm p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="text-xs text-gray-500">Voucher No</div>
+                          <div className="text-sm font-semibold">{highlightSearchTerm(voucher.voucher_no, searchTerm)}</div>
+                        </div>
+                        <button
+                          onClick={() => handleViewDetails(voucher, event)}
+                          className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" /> View
+                        </button>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                          <div className="text-gray-500">Date</div>
+                          <div className="font-medium">{formatDate(voucher.created_at)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Item</div>
+                          <div className="font-medium">{highlightSearchTerm(voucher.item_details?.item_name || '', searchTerm)}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Sender</div>
+                          <div className="font-medium">{senderId ? (senderNames[senderId] ?? 'Loading...') : '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Job Work</div>
+                          <div className="font-medium">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">LR No</div>
+                          <div className="font-medium">{event.details.transport?.lr_no || '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">LR Date</div>
+                          <div className="font-medium">{event.details.transport?.lr_date || '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Sent Qty</div>
+                          <div className="font-medium">{event.details.quantity_forwarded || 'N/A'}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="text-gray-500">Comment</div>
+                          <div className="font-medium truncate">{event.comment || '-'}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex flex-col xs:flex-row gap-2">
+                        <button
+                          onClick={() => handleReceiveVoucher(voucher, event)}
+                          className="w-full xs:w-auto px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                        >
+                          Receive
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })}
+            </div>
+          </div>
+
           {/* No results message */}
           {filteredVouchers.length === 0 && pendingVouchers.length === 0 && (
             <div className="text-center p-8 text-gray-500">
@@ -833,12 +911,13 @@ export default function AdminReceiveVoucher() {
           {/* Already Received Vouchers Section */}
           {alreadyReceived.length > 0 && (
             <div className="mt-8">
-              <div className="p-4 bg-green-600 text-white rounded-t-lg mb-4 flex items-center justify-center">
+              <div className="p-3 sm:p-4 bg-green-600 text-white rounded-t-lg mb-4 flex items-center justify-center">
                 <Check className="h-6 w-6 mr-2" />
-                <h1 className="text-2xl font-bold text-center">ALREADY RECEIVED VOUCHERS ({alreadyReceived.length})</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-center">ALREADY RECEIVED VOUCHERS ({alreadyReceived.length})</h1>
               </div>
 
-              <div className="relative border border-green-200 rounded-lg overflow-auto max-h-[70vh]">
+              {/* Desktop Table */}
+              <div className="hidden lg:block relative border border-green-200 rounded-lg overflow-auto max-h-[70vh]">
                 <table className="min-w-full bg-white">
                   <thead className="bg-green-50 sticky top-0 z-10">
                     <tr>
@@ -893,6 +972,76 @@ export default function AdminReceiveVoucher() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile/Tablet Cards */}
+              <div className="block lg:hidden space-y-3">
+                {alreadyReceived.flatMap((voucher) => {
+                  const receivedEvents = getReceivedForwardEvents(voucher);
+
+                  return receivedEvents.map((event) => {
+                    const senderId = event.details.sender_id || '';
+                    const receiveEvent = voucher.events.find((e: VoucherEvent) =>
+                      e.event_type === 'receive' &&
+                      e.user_id === adminUid &&
+                      e.parent_event_id === event.event_id
+                    );
+
+                    return (
+                      <div key={`${voucher.id}-${event.event_id}`} className="bg-white border border-green-200 rounded-md shadow-sm p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="text-xs text-gray-500">Voucher No</div>
+                            <div className="text-sm font-semibold">{voucher.voucher_no}</div>
+                          </div>
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-[10px] font-medium h-fit">Received</span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                          <div>
+                            <div className="text-gray-500">Date</div>
+                            <div className="font-medium">{formatDate(voucher.created_at)}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Item</div>
+                            <div className="font-medium">{voucher.item_details?.item_name || ''}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Sender</div>
+                            <div className="font-medium">{senderId ? (senderNames[senderId] ?? 'Loading...') : '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Job Work</div>
+                            <div className="font-medium">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">LR No</div>
+                            <div className="font-medium">{event.details.transport?.lr_no || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">LR Date</div>
+                            <div className="font-medium">{event.details.transport?.lr_date || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Received Qty</div>
+                            <div className="font-medium">{receiveEvent?.details.quantity_received || 'N/A'}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Receive Date</div>
+                            <div className="font-medium">{formatDate(receiveEvent?.timestamp || '')}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => handleViewDetails(voucher, event)}
+                            className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm flex items-center justify-center gap-1"
+                          >
+                            <Eye className="h-4 w-4" /> View Details
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  });
+                })}
               </div>
             </div>
           )}

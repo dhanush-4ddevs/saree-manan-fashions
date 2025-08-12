@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, FileText, PlusCircle, Edit, Trash, Printer, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, FileText, PlusCircle, Edit, Trash, Printer, Eye, Image as ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VoucherForm, VoucherFormSubmitData } from '@/components/shared/VoucherForm';
 import { Voucher, VoucherFormData } from '@/types/voucher';
@@ -223,17 +223,17 @@ function CreateVoucherContent() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-0 md:p-8 max-w-5xl mx-auto">
-      <div className="flex items-center mb-6 md:mb-8 border-b pb-4 p-4">
-        {/* <ArrowLeft
-          className="h-5 w-5 text-gray-500 mr-3 cursor-pointer hover:text-blue-600 transition-colors"
-          onClick={() => router.back()}
-        /> */}
-
-        <h2 className="text-2xl font-bold text-blue-800">Create New Voucher</h2>
+    <div className="bg-white rounded-xl shadow-md overflow-hidden max-w-5xl mx-auto">
+      <div className="bg-gradient-to-r from-blue-700 to-blue-600 py-6 px-8 rounded-t-xl">
+        <div className="flex items-center text-white">
+          <div className="bg-white/10 p-3 rounded-full">
+            <FileText className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold ml-4">Create New Voucher</h1>
+        </div>
       </div>
 
-      <div className="space-y-0 md:space-y-4">
+      <div className="p-2 md:p-6 space-y-0 md:space-y-4">
 
 
         <div>
@@ -273,6 +273,13 @@ function CreateVoucherContent() {
                       </div>
                     </div>
                     <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleVoucherClick(voucher)}
+                        className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => handlePrintVoucher(voucher)}
                         className="p-1 text-gray-500 hover:text-blue-600 transition-colors"

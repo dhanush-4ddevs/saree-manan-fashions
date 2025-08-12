@@ -28,16 +28,20 @@ function CompletionRequestsPageContent() {
   // Mobile menu items - simplified version for the dock
   const mobileMenuItems = [
     { name: 'Dashboard', icon: LayoutDashboard },
-    { name: 'Users', icon: Users, hasSubMenu: true, subItems: [
-      { name: 'Add User', icon: UserPlus },
-      { name: 'List Users', icon: Users },
-      { name: 'My Profile', icon: User }
-    ]},
-    { name: 'Vouchers', icon: FileText, hasSubMenu: true, subItems: [
-      { name: 'Create New Voucher', icon: Plus },
-      { name: 'All Vouchers', icon: ListChecks },
-      { name: 'Receive Vouchers', icon: Check }
-    ]},
+    {
+      name: 'Users', icon: Users, hasSubMenu: true, subItems: [
+        { name: 'Add User', icon: UserPlus },
+        { name: 'List Users', icon: Users },
+        { name: 'My Profile', icon: User }
+      ]
+    },
+    {
+      name: 'Vouchers', icon: FileText, hasSubMenu: true, subItems: [
+        { name: 'Create New Voucher', icon: Plus },
+        { name: 'All Vouchers', icon: ListChecks },
+        { name: 'Receive Vouchers', icon: Check }
+      ]
+    },
     { name: 'Accounts', icon: IndianRupee },
     { name: 'Profile', icon: User, action: () => handleProfileClick() }
   ];
@@ -121,7 +125,7 @@ function CompletionRequestsPageContent() {
   };
 
   const handleProfileClick = () => {
-    router.push('/admin-dashboard/my-profile');
+    router.push('/admin-dashboard?tab=My Profile');
   };
 
   const handleMobileMenuClick = (item: any) => {
@@ -171,7 +175,7 @@ function CompletionRequestsPageContent() {
   };
 
   const handleAccountsClick = () => {
-    router.push('/admin-dashboard/accounts');
+    router.push('/admin-dashboard?tab=Accounts');
   };
 
   return (
@@ -329,7 +333,7 @@ function CompletionRequestsPageContent() {
             </p>
           </div>
 
-          <div className="bg-white shadow-md rounded-lg p-6 border border-blue-100">
+          <div className="bg-white shadow-md rounded-lg p-0 lg:p-4 border border-blue-100">
             <AdminReceiveVoucher />
           </div>
         </div>
@@ -378,8 +382,8 @@ function CompletionRequestsPageContent() {
                 key={item.name}
                 onClick={() => handleMobileMenuClick(item)}
                 className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive
-                    ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
-                    : 'text-blue-400 hover:bg-blue-50'
+                  ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
+                  : 'text-blue-400 hover:bg-blue-50'
                   }`}
               >
                 <div className={`relative ${isActive ? 'scale-110 -translate-y-1' : ''} transition-transform duration-200`}>

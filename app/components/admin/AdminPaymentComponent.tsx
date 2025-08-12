@@ -273,7 +273,7 @@ export default function AdminPaymentComponent() {
   };
 
   return (
-    <div className="p-6 bg-white">
+    <div className="p-0 lg:p-4 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
@@ -606,8 +606,8 @@ export default function AdminPaymentComponent() {
 
         {/* Results Summary */}
         <div className="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between text-gray-600 text-sm">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between text-gray-600 text-xs lg:text-sm">
+            <div className="flex items-center space-x-1 lg:space-x-4">
               <span>Showing {displayRows.length} of {rows.length} records</span>
               <span>•</span>
               <span>Unpaid: {unpaidCount}</span>

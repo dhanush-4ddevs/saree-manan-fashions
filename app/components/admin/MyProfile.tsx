@@ -1224,8 +1224,8 @@ export default function MyProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="max-w-7xl mx-auto px-0 lg:px-8">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden p-2 lg:p-4">
           {/* Enhanced Header */}
           <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-700 py-6 px-4 sm:py-8 sm:px-8">
             {/* Mobile header (image left of heading) */}
@@ -1413,15 +1413,15 @@ export default function MyProfile() {
             </div>
           )}
 
-          <div className="p-8">
+          <div className="p-3 lg:p-4">
             {/* Personal Details Tab */}
             {activeTab === 'personal' && userData && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center">
                   <User className="h-6 w-6 mr-3 text-blue-600" />
                   Personal Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-6">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl border border-blue-200">
                     <h3 className="text-sm font-semibold text-blue-700 mb-2">First Name</h3>
                     <p className="text-lg text-blue-900 font-medium">{userData.firstName || 'N/A'}</p>
@@ -1454,11 +1454,11 @@ export default function MyProfile() {
                   </div>
                 </div>
 
-                <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-8 flex items-center">
+                <h2 className="text-2xl font-bold text-gray-800 mt-12 mb-4 flex items-center">
                   <Package className="h-6 w-6 mr-3 text-blue-600" />
                   Work Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6">
                   <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-xl border border-green-200">
                     <h3 className="text-sm font-semibold text-green-700 mb-2">Code</h3>
                     <p className="text-lg text-green-900 font-medium">{userData.userCode || 'N/A'}</p>
@@ -1474,7 +1474,7 @@ export default function MyProfile() {
                   </div>
                   <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-xl border border-green-200">
                     <h3 className="text-sm font-semibold text-green-700 mb-2">Work</h3>
-                    <p className="text-lg text-green-900 font-medium">{userData.vendorJobWork || 'N/A'}</p>
+                    <p className="text-lg text-green-900 font-medium">{userData.vendorJobWork || 'Not provided'}</p>
                     <p className="text-xs text-green-500 mt-2">Added by admin - cannot be changed</p>
                   </div>
                 </div>
@@ -2238,12 +2238,7 @@ export default function MyProfile() {
                     <Shield className="h-5 w-5 mr-2 text-gray-600" />
                     System Information
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-4 rounded-lg border border-gray-200">
-                      <h4 className="font-semibold text-gray-700 mb-2">Database Collections</h4>
-                      <p className="text-2xl font-bold text-blue-600">7</p>
-                      <p className="text-sm text-gray-500">users, vouchers, payments, etc.</p>
-                    </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-4 rounded-lg border border-gray-200">
                       <h4 className="font-semibold text-gray-700 mb-2">Backup Format</h4>
                       <p className="text-2xl font-bold text-green-600">Excel</p>
