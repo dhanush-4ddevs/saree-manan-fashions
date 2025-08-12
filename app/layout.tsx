@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./styles/globals.css";
 import FirebaseInitializer from "./components/shared/FirebaseInitializer";
+import PWAInstallPrompt from "./components/shared/PWAInstallPrompt";
 import { Analytics } from "@vercel/analytics/next"
 
 
@@ -29,13 +30,15 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/logo_kraj.png" />
+        <link rel="apple-touch-icon" href="/logo_kraj.png" />
         <meta name="theme-color" content="#2563eb" />
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-blue-50/80`}
       >
         <FirebaseInitializer />
-        <Analytics/>
+        <Analytics />
+        <PWAInstallPrompt />
         {children}
       </body>
     </html>
