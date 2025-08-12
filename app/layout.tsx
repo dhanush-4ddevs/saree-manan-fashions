@@ -29,8 +29,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/logo_kraj.png" />
-        <link rel="apple-touch-icon" href="/logo_kraj.png" />
+        <link rel="icon" href="/logo_for_app.png" />
+        <link rel="apple-touch-icon" href="/logo_for_app.png" />
         <meta name="theme-color" content="#2563eb" />
       </head>
       <body

@@ -52,14 +52,14 @@ export default function PWAInstallPrompt() {
     if (!show) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-4 text-center">
                 <div className="flex justify-center mb-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/logo_kraj.png" alt="App icon" className="w-16 h-16 rounded" />
+                    <img src="/logo_for_app.png" alt="App icon" className="w-16 h-16 rounded" />
                 </div>
                 <h2 className="text-lg font-semibold mb-1">Install Manan Fashions</h2>
-                <p className="text-sm text-gray-600 mb-4">Install this app on your device for a faster, full-screen experience.</p>
+                <p className="text-sm text-gray-600 mb-4"> Now you can install as mobile app.</p>
                 <div className="flex gap-2 justify-center">
                     <button onClick={onClose} className="px-4 py-2 rounded-md border">Not now</button>
                     <button onClick={onInstallClick} className="px-4 py-2 rounded-md bg-blue-600 text-white">Install</button>
