@@ -19,6 +19,7 @@ import { jsPDF } from 'jspdf';
 import autoTable, { HookData } from 'jspdf-autotable';
 import AdminPaymentComponent from './AdminPaymentComponent';
 import BackupManager from './BackupManager';
+import SystemSettings from './SystemSettings';
 
 // Add type declarations for jsPDF with autoTable
 declare module 'jspdf' {
@@ -267,18 +268,20 @@ export default function AdminDashboard() {
       ]
     },
     {
+      name: 'Accounts',
+      icon: IndianRupee,
+      isCategory: false
+    },
+    {
       name: 'System Management',
       icon: Settings,
       isCategory: true,
       subItems: [
-        { name: 'Backup Management', icon: Database }
+        { name: 'Backup Management', icon: Database },
+        { name: 'Maintenance Tools', icon: Settings }
       ]
-    },
-    {
-      name: 'Accounts',
-      icon: IndianRupee,
-      isCategory: false
     }
+
   ];
 
   // Mobile menu items - simplified version for the dock
@@ -300,7 +303,8 @@ export default function AdminDashboard() {
     },
     {
       name: 'System', icon: Settings, hasSubMenu: true, subItems: [
-        { name: 'Backup Management', icon: Database }
+        { name: 'Backup Management', icon: Database },
+        { name: 'Maintenance Tools', icon: Settings }
       ]
     },
     { name: 'Accounts', icon: IndianRupee },
@@ -420,6 +424,8 @@ export default function AdminDashboard() {
       router.push('/admin-dashboard/completion-requests');
     } else if (subItemName === 'Backup Management') {
       setActivePage('Backup Management');
+    } else if (subItemName === 'Maintenance Tools') {
+      setActivePage('Maintenance Tools');
     }
   };
 
@@ -543,6 +549,20 @@ export default function AdminDashboard() {
               </div>
               <div className="bg-white shadow-md rounded-lg border border-blue-100">
                 <BackupManager />
+              </div>
+            </div>
+          );
+        case 'Maintenance Tools':
+          return (
+            <div>
+              <div className="mb-8">
+                <h1 className="text-2xl font-bold text-blue-800">Maintenance Tools</h1>
+                <p className="text-blue-600 mt-1">
+                  Backup data and perform system-wide maintenance actions.
+                </p>
+              </div>
+              <div className="bg-white shadow-md rounded-lg border border-blue-100 p-4 md:p-6">
+                <SystemSettings />
               </div>
             </div>
           );
@@ -846,8 +866,8 @@ export default function AdminDashboard() {
             <div className="p-4">
               <div className="text-sm font-medium text-blue-600 mb-3">
                 {mobileSubMenuOpen === 'Users' ? 'User Management' :
-                 mobileSubMenuOpen === 'Vouchers' ? 'Voucher Management' :
-                 mobileSubMenuOpen === 'System' ? 'System Management' : 'Menu'}
+                  mobileSubMenuOpen === 'Vouchers' ? 'Voucher Management' :
+                    mobileSubMenuOpen === 'System' ? 'System Management' : 'Menu'}
               </div>
               <div className="grid grid-cols-1 gap-2">
                 {mobileMenuItems.find(item => item.name === mobileSubMenuOpen)?.subItems?.map((subItem) => {
@@ -874,7 +894,7 @@ export default function AdminDashboard() {
             const isActive = (item.name === 'Dashboard' && activePage === 'Dashboard') ||
               (item.name === 'Users' && activePage.includes('User')) ||
               (item.name === 'Vouchers' && activePage.includes('Voucher')) ||
-              (item.name === 'System' && activePage.includes('Backup')) ||
+              (item.name === 'System' && (activePage.includes('Backup') || activePage.includes('Maintenance'))) ||
               (item.name === 'Accounts' && activePage === 'Accounts') ||
               (item.name === 'Profile' && activePage === 'My Profile') ||
               (mobileSubMenuOpen === item.name);

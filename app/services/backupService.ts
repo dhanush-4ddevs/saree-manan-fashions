@@ -209,6 +209,64 @@ export class BackupService {
   }
 
   /**
+   * Export backup for all data from the beginning of time until now (current second)
+   */
+  static async exportBackupUntilNow(): Promise<BackupData> {
+    console.log('Starting full backup export until now');
+
+    // Do not round the end time; capture up to the current moment
+    const start = new Date(0);
+    const end = new Date();
+
+    try {
+      const vouchers = await this.getVouchersForDate(start, end);
+
+      const userIds = new Set<string>();
+      vouchers.forEach(voucher => {
+        userIds.add(voucher.created_by_user_id);
+        voucher.events.forEach(event => {
+          if (event.user_id) userIds.add(event.user_id);
+          if (event.details.sender_id) userIds.add(event.details.sender_id);
+          if (event.details.receiver_id) userIds.add(event.details.receiver_id);
+        });
+      });
+
+      const users = await this.getUsersByIds(Array.from(userIds));
+      const images = await this.getImagesForVouchers(vouchers);
+
+      const metadata: BackupMetadata = {
+        version: this.BACKUP_VERSION,
+        createdAt: new Date().toISOString(),
+        dateRange: {
+          start: start.toISOString(),
+          end: end.toISOString()
+        },
+        summary: {
+          totalVouchers: vouchers.length,
+          totalImages: Object.keys(images).length,
+          totalUsers: users.length,
+          totalEvents: vouchers.reduce((total, voucher) => total + voucher.events.length, 0)
+        },
+        firebaseConfig: {
+          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || ''
+        }
+      };
+
+      return {
+        metadata,
+        vouchers,
+        users,
+        images
+      };
+
+    } catch (error) {
+      console.error('Error during full backup export:', error);
+      throw new Error(`Backup export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
    * Import backup data with validation and restoration
    */
   static async importBackup(backupData: BackupData): Promise<BackupImportResult> {

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { BackupService, BackupData, BackupImportResult } from '../../services/backupService';
+import { BackupService, BackupImportResult } from '../../services/backupService';
 import { toast } from 'react-hot-toast';
-import { Calendar, Download, Upload, FileText, AlertCircle, CheckCircle, XCircle, Loader2, Database, Shield, Clock } from 'lucide-react';
+import { Download, Upload, FileText, AlertCircle, CheckCircle, Loader2, Shield, Clock } from 'lucide-react';
 
 interface BackupStats {
   voucherCount: number;
@@ -13,96 +13,38 @@ interface BackupStats {
 }
 
 export default function BackupManager() {
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [backupStats, setBackupStats] = useState<BackupStats | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [importResult, setImportResult] = useState<BackupImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  const loadBackupStats = async (date: Date) => {
-    setIsLoadingStats(true);
-    try {
-      const stats = await BackupService.getBackupStats(date);
-      setBackupStats(stats);
-    } catch (error) {
-      console.error('Error loading backup stats:', error);
-      toast.error('Failed to load backup statistics');
-    } finally {
-      setIsLoadingStats(false);
-    }
-  };
-
-  const handleDateChange = (date: string) => {
-    setSelectedDate(date);
-    loadBackupStats(new Date(date));
-  };
-
-  const exportDailyBackup = async () => {
+  const exportAllUntilNow = async () => {
     setIsExporting(true);
     try {
-      const targetDate = new Date(selectedDate);
-      const backupData = await BackupService.exportDailyBackup(targetDate);
+      const backupData = await BackupService.exportBackupUntilNow();
 
-      // Create and download the backup file
       const blob = await BackupService.createBackupFile(backupData);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `backup_${selectedDate}.json`;
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const dd = pad(now.getDate());
+      const mm = pad(now.getMonth() + 1);
+      const yyyy = now.getFullYear();
+      const hh = pad(now.getHours());
+      const min = pad(now.getMinutes());
+      const ss = pad(now.getSeconds());
+      a.download = `manan_fashions_backup_${dd}-${mm}-${yyyy}_${hh}-${min}-${ss}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success(`Daily backup exported successfully! ${backupData.metadata.summary.totalVouchers} vouchers, ${backupData.metadata.summary.totalImages} images`);
+      toast.success(`Backup exported successfully! ${backupData.metadata.summary.totalVouchers} vouchers, ${backupData.metadata.summary.totalImages} images`);
     } catch (error) {
-      console.error('Error exporting daily backup:', error);
-      toast.error('Failed to export daily backup');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const exportDateRangeBackup = async () => {
-    setIsExporting(true);
-    try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-
-      if (start > end) {
-        toast.error('Start date must be before end date');
-        return;
-      }
-
-      const backupData = await BackupService.exportDateRangeBackup(start, end);
-
-      // Create and download the backup file
-      const blob = await BackupService.createBackupFile(backupData);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup_${startDate}_to_${endDate}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      toast.success(`Date range backup exported successfully! ${backupData.metadata.summary.totalVouchers} vouchers, ${backupData.metadata.summary.totalImages} images`);
-    } catch (error) {
-      console.error('Error exporting date range backup:', error);
-      toast.error('Failed to export date range backup');
+      console.error('Error exporting backup:', error);
+      toast.error('Failed to export backup');
     } finally {
       setIsExporting(false);
     }
@@ -146,31 +88,22 @@ export default function BackupManager() {
     <div className="space-y-6">
 
 
-      {/* Export Section */}
+      {/* Export + Import cards side-by-side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Export */}
+        {/* Single Export Section */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
             <h3 className="text-lg font-semibold text-white flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
-              Daily Export
+              <Download className="w-5 h-5 mr-2" />
+              Export All Data (until now)
             </h3>
           </div>
           <div className="p-6 space-y-4">
-            <div>
-              <label htmlFor="daily-date" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Date
-              </label>
-              <input
-                type="date"
-                id="daily-date"
-                value={selectedDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            <p className="text-sm text-gray-600">
+              Exports all vouchers, related users, and images up to the current second.
+            </p>
             <button
-              onClick={exportDailyBackup}
+              onClick={exportAllUntilNow}
               disabled={isExporting}
               className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -182,106 +115,51 @@ export default function BackupManager() {
               ) : (
                 <>
                   <Download className="w-5 h-5" />
-                  <span>Export Daily Backup</span>
+                  <span>Export All Data</span>
                 </>
               )}
             </button>
           </div>
         </div>
 
-        {/* Date Range Export */}
+        {/* Import Section */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+          <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
             <h3 className="text-lg font-semibold text-white flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
-              Date Range Export
+              <Upload className="w-5 h-5 mr-2" />
+              Import Backup
             </h3>
           </div>
           <div className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  id="start-date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  id="end-date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-2">Select a backup file to import</p>
+              <p className="text-sm text-gray-500 mb-4">Only .json files are supported</p>
+              <button
+                onClick={triggerFileSelect}
+                disabled={isImporting}
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Importing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    <span>Choose File</span>
+                  </>
+                )}
+              </button>
             </div>
-            <button
-              onClick={exportDateRangeBackup}
-              disabled={isExporting}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium py-3 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Exporting...</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  <span>Export Date Range</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Import Section */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
-          <h3 className="text-lg font-semibold text-white flex items-center">
-            <Upload className="w-5 h-5 mr-2" />
-            Import Backup
-          </h3>
-        </div>
-        <div className="p-6 space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-400 transition-colors">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 mb-2">Select a backup file to import</p>
-            <p className="text-sm text-gray-500 mb-4">Only .json files are supported</p>
-            <button
-              onClick={triggerFileSelect}
-              disabled={isImporting}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium py-2 px-4 rounded-md transition-all duration-200 flex items-center justify-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Importing...</span>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5" />
-                  <span>Choose File</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
@@ -308,7 +186,7 @@ export default function BackupManager() {
                   <FileText className="w-6 h-6 text-blue-500" />
                 </div>
               </div>
-              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+              {/* <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-green-600">Images</p>
@@ -318,7 +196,7 @@ export default function BackupManager() {
                   </div>
                   <Shield className="w-6 h-6 text-green-500" />
                 </div>
-              </div>
+              </div> */}
               <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                 <div className="flex items-center justify-between">
                   <div>
