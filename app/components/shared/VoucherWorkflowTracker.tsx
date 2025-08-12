@@ -23,6 +23,8 @@ import { Voucher, VoucherEvent, calculateTotalQuantityReceived, calculateTotalQu
 import { db } from '../../config/firebase';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import React from 'react';
+import { PrintPreviewModal } from './PrintPreviewModal';
+import { Printer } from 'lucide-react';
 
 interface VoucherWorkflowTrackerProps {
   voucherId?: string;
@@ -61,6 +63,7 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
   const [expandedVendors, setExpandedVendors] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('chronological');
   const [userNames, setUserNames] = useState<{ [uid: string]: string }>({});
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Helper to fetch user display name from Firestore
   const fetchUserName = async (uid: string) => {
@@ -213,6 +216,14 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
               <div>Last sync: {lastUpdated.toLocaleString()}</div>
             </div>
           )}
+          <button
+            onClick={() => setShowPrintPreview(true)}
+            disabled={!voucher}
+            className="flex items-center px-3 py-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Printer className="h-4 w-4 mr-1" />
+            Print Preview
+          </button>
         </div>
       </div>
 
@@ -597,6 +608,12 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
           </div>
         </div>
       )}
+      {/* Print Preview Modal */}
+      <PrintPreviewModal
+        voucher={voucher}
+        isOpen={showPrintPreview}
+        onClose={() => setShowPrintPreview(false)}
+      />
     </div>
   );
 }

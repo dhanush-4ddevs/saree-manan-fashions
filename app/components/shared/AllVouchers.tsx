@@ -12,7 +12,7 @@ import VoucherWorkflowTracker from './VoucherWorkflowTracker';
 import VoucherDetails from './VoucherDetails';
 import { formatIndianQuantity } from '@/lib/format';
 import { getStatusColor, getStatusBackgroundColor } from '@/utils/voucherStatusManager';
-import { PrintPreviewModal } from './PrintPreviewModal';
+import { AlternatePrintPreviewModal } from './AlternatePrintPreviewModal';
 import { getCurrentDateString, validateDateRange } from '@/utils/dateFormatter';
 import { ImageContainer } from './ImageContainer';
 import { useJobWorks } from '@/hooks/useJobWorks';
@@ -1139,8 +1139,8 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
         />
       )}
 
-      {/* Print Preview Modal */}
-      <PrintPreviewModal
+      {/* Alternate Print Preview Modal (specific to All Vouchers page) */}
+      <AlternatePrintPreviewModal
         voucher={selectedVoucherForPrint}
         isOpen={showPrintPreview}
         onClose={() => {

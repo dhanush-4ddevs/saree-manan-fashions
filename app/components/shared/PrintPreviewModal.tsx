@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Download, Eye, FileText, Printer, Calendar, Package, CheckCircle } from 'lucide-react';
 import { Voucher } from '@/types/voucher';
-import { generateVoucherPDF } from '@/utils/pdfGenerator';
+import { printSingleVoucher } from '@/utils/printsinglevoucher';
 
 interface PrintPreviewModalProps {
     voucher: Voucher | null;
@@ -35,7 +35,7 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
         setError(null);
 
         try {
-            const doc = await generateVoucherPDF(voucher);
+            const doc = await printSingleVoucher(voucher);
             const pdfBlob = doc.output('blob');
             const url = URL.createObjectURL(pdfBlob);
             setPdfUrl(url);
@@ -51,7 +51,7 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
         if (!voucher || !pdfUrl) return;
 
         try {
-            const doc = await generateVoucherPDF(voucher);
+            const doc = await printSingleVoucher(voucher);
             doc.save(`voucher-${voucher.voucher_no}.pdf`);
         } catch (err) {
             console.error('Error downloading PDF:', err);
