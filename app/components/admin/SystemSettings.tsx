@@ -168,12 +168,12 @@ export default function SystemSettings() {
                         <div className="bg-red-50 p-4 rounded-md border border-red-200">
                             <h4 className="font-semibold text-red-800 mb-2 text-sm">Warning</h4>
                             <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
-                                <li>• This action is IRREVERSIBLE</li>
-                                <li>• All vouchers and events will be deleted</li>
-                                <li>• All payment records will be removed</li>
-                                <li>• All notifications will be cleared</li>
-                                <li>• All vendor notifications will be removed</li>
-                                <li>• All password change requests will be deleted</li>
+                                <li> This action is IRREVERSIBLE</li>
+                                <li> All vouchers and events will be deleted</li>
+                                <li> All payment records will be removed</li>
+                                <li> All notifications will be cleared</li>
+                                <li> All vendor notifications will be removed</li>
+                                <li> All password change requests will be deleted</li>
                             </ul>
                             <p className="text-sm text-red-600 mt-2 font-medium">User accounts will be preserved.</p>
                         </div>
@@ -222,10 +222,10 @@ export default function SystemSettings() {
                         <div className="bg-red-50 p-4 rounded-md border border-red-200">
                             <h4 className="font-semibold text-red-800 mb-2 text-sm">Warning</h4>
                             <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
-                                <li>• This action is IRREVERSIBLE</li>
-                                <li>• All user accounts (admins and vendors) will be deleted</li>
-                                <li>• All profile information and settings stored with users will be removed</li>
-                                <li>• Login access for deleted users will be revoked</li>
+                                <li> This action is IRREVERSIBLE</li>
+                                <li> All user accounts (admins and vendors) will be deleted</li>
+                                <li> All profile information and settings stored with users will be removed</li>
+                                <li> Login access for deleted users will be revoked</li>
                             </ul>
                             <p className="text-sm text-red-600 mt-2 font-medium">The Master Admin account will be preserved.</p>
                         </div>
