@@ -1,38 +1,48 @@
-/* Basic service worker for offline caching */
-const CACHE_NAME = "manan-cache-v1";
-const APP_SHELL = ["/"];
-
+/* Network-only service worker: no caching */
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-        )
-      )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })()
   );
 });
 
 self.addEventListener("fetch", (event) => {
-  const request = event.request;
-  event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request)
-          .then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-            return response;
-          })
-          .catch(() => cached)
-    )
-  );
+  const req = event.request;
+
+  if (req.method !== "GET") return;
+
+  if (req.mode === "navigate") {
+    event.respondWith(
+      fetch(req, { cache: "no-store" }).catch(
+        () =>
+          new Response(
+            `<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Offline</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;margin:0;padding:2rem;background:#fff;color:#111}
+    .banner{background:#ef4444;color:#fff;padding:.75rem 1rem;border-radius:.5rem}
+  </style>
+  </head>
+  <body>
+    <div class="banner">You are offline. Please check your internet connection and try again.</div>
+  </body>
+  </html>`,
+            { headers: { "Content-Type": "text/html" } }
+          )
+      )
+    );
+    return;
+  }
+
+  event.respondWith(fetch(req, { cache: "no-store" }));
 });

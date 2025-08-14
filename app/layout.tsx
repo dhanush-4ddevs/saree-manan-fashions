@@ -4,6 +4,7 @@ import "./styles/globals.css";
 import FirebaseInitializer from "./components/shared/FirebaseInitializer";
 import PWAInstallPrompt from "./components/shared/PWAInstallPrompt";
 import { Analytics } from "@vercel/analytics/next"
+import NetworkStatusBanner from "./components/shared/NetworkStatusBanner";
 
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({
         <FirebaseInitializer />
         <Analytics />
         <PWAInstallPrompt />
+        <NetworkStatusBanner />
         {children}
       </body>
     </html>

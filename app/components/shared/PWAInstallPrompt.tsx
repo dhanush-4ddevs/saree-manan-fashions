@@ -32,7 +32,23 @@ export default function PWAInstallPrompt() {
 
     useEffect(() => {
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/sw.js").catch(() => { });
+            const register = async () => {
+                try {
+                    const reg = await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
+                    await navigator.serviceWorker.ready;
+                    reg.update();
+                } catch {
+                }
+            };
+            register();
+
+            const onVisibility = () => {
+                if (document.visibilityState === "visible") {
+                    navigator.serviceWorker.getRegistration().then((r) => r?.update());
+                }
+            };
+            document.addEventListener("visibilitychange", onVisibility);
+            return () => document.removeEventListener("visibilitychange", onVisibility);
         }
     }, []);
 
