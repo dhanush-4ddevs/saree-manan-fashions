@@ -1379,7 +1379,7 @@ export default function MyProfile() {
                   My Account
                 </button>
               )}
-              {userData?.role === 'admin' && (
+              {/* {userData?.role === 'admin' && (
                 <button
                   onClick={() => setActiveTab('settings')}
                   className={`px-4 py-3 sm:px-6 sm:py-4 font-medium text-xs sm:text-sm whitespace-nowrap transition-all duration-200 ${activeTab === 'settings'
@@ -1390,7 +1390,7 @@ export default function MyProfile() {
                   <Settings className="h-4 w-4 inline mr-2" />
                   Settings
                 </button>
-              )}
+              )} */}
             </div>
           </div>
 
