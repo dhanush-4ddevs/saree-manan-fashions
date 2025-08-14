@@ -221,17 +221,8 @@ export class BackupService {
     try {
       const vouchers = await this.getVouchersForDate(start, end);
 
-      const userIds = new Set<string>();
-      vouchers.forEach(voucher => {
-        userIds.add(voucher.created_by_user_id);
-        voucher.events.forEach(event => {
-          if (event.user_id) userIds.add(event.user_id);
-          if (event.details.sender_id) userIds.add(event.details.sender_id);
-          if (event.details.receiver_id) userIds.add(event.details.receiver_id);
-        });
-      });
-
-      const users = await this.getUsersByIds(Array.from(userIds));
+      // For a full backup, include ALL users, not just those referenced in vouchers
+      const users = await this.getAllUsers();
       const images = await this.getImagesForVouchers(vouchers);
 
       const metadata: BackupMetadata = {
@@ -264,6 +255,15 @@ export class BackupService {
       console.error('Error during full backup export:', error);
       throw new Error(`Backup export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  /**
+   * Get all users in the system (used for full backups)
+   */
+  private static async getAllUsers(): Promise<User[]> {
+    const usersRef = collection(db, 'users');
+    const snapshot = await getDocs(usersRef);
+    return snapshot.docs.map(d => d.data() as User);
   }
 
   /**
