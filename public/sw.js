@@ -1,38 +1,39 @@
-/* Basic service worker for offline caching */
-const CACHE_NAME = "manan-cache-v1";
-const APP_SHELL = ["/"];
+/* Network-only service worker (no caching) */
+const SW_VERSION = "v3-network-only-2025-08-14";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  // Activate updated SW immediately
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
+  // Clear all existing caches from any previous versions
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
-        )
-      )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      // Ensure the new SW controls all clients immediately
+      await self.clients.claim();
+    })()
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (!event.data) return;
+  if (event.data === "SKIP_WAITING" || event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
-  const request = event.request;
+  // Always fetch from network; do not read/write CacheStorage
   event.respondWith(
-    caches.match(request).then(
-      (cached) =>
-        cached ||
-        fetch(request)
-          .then((response) => {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-            return response;
-          })
-          .catch(() => cached)
-    )
+    fetch(event.request, { cache: "no-store" }).catch(() => {
+      // If offline, let the request fail naturally without serving stale cache
+      return new Response("", {
+        status: 503,
+        statusText: "Service Unavailable",
+      });
+    })
   );
 });

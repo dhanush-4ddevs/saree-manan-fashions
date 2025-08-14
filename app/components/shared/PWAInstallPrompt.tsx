@@ -32,7 +32,23 @@ export default function PWAInstallPrompt() {
 
     useEffect(() => {
         if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/sw.js").catch(() => { });
+            navigator.serviceWorker
+                .register("/sw.js")
+                .then(async (registration) => {
+                    // Force update check and claim clients so new SW activates fast
+                    try { await registration.update(); } catch { }
+                    if (registration.waiting) {
+                        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+                    }
+                    try {
+                        const controller = navigator.serviceWorker.controller;
+                        if (!controller && registration.active) {
+                            // reload once to ensure new controller takes effect
+                            window.location.reload();
+                        }
+                    } catch { }
+                })
+                .catch(() => { });
         }
     }, []);
 
