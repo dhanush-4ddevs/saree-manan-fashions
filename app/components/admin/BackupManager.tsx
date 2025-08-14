@@ -92,7 +92,7 @@ export default function BackupManager() {
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4">
             <h3 className="text-lg font-semibold text-white flex items-center">
-              <Download className="w-5 h-5 mr-2" />
+              <Upload className="w-5 h-5 mr-2" />
               Export All Data (until now)
             </h3>
           </div>
@@ -126,7 +126,7 @@ export default function BackupManager() {
                 </>
               ) : (
                 <>
-                  <Download className="w-5 h-5" />
+                  <Upload className="w-5 h-5" />
                   <span>Export All Data</span>
                 </>
               )}
@@ -138,7 +138,7 @@ export default function BackupManager() {
         <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
           <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4">
             <h3 className="text-lg font-semibold text-white flex items-center">
-              <Upload className="w-5 h-5 mr-2" />
+              <Download className="w-5 h-5 mr-2" />
               Import Backup
             </h3>
           </div>
@@ -151,7 +151,7 @@ export default function BackupManager() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <Download className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Select a backup file to import</p>
               <p className="text-sm text-gray-500 mb-4">Only .json files are supported</p>
               <button
@@ -166,7 +166,7 @@ export default function BackupManager() {
                   </>
                 ) : (
                   <>
-                    <Upload className="w-5 h-5" />
+                    <Download className="w-5 h-5" />
                     <span>Choose File</span>
                   </>
                 )}
