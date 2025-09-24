@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight, Download, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface ImageModalProps {
   images: string[];
@@ -111,6 +112,7 @@ export function ImageModal({ images, currentIndex, isOpen, onClose, onIndexChang
   };
 
   const handleDownload = () => {
+    toast.success('Download started', { position: 'bottom-center' });
     const link = document.createElement('a');
     link.href = images[currentIndex];
     link.download = `voucher-image-${currentIndex + 1}.jpg`;

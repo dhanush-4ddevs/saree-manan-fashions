@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Download, FileText, Printer, Calendar, DollarSign, TrendingUp, TrendingDown, Clock, Eye } from 'lucide-react';
+import { showCountdownToast } from '@/utils/toastUtils';
 import { printSinglePayment, printAllPayments, PaymentRow } from '../../utils/paymentPrintUtils';
 
 interface PaymentPrintPreviewModalProps {
@@ -63,6 +64,7 @@ export function PaymentPrintPreviewModal({
         if (!pdfUrl) return;
 
         try {
+      showCountdownToast('Download started', 'info', 10000);
             let doc;
 
             if (reportType === 'single' && singleRow) {
@@ -236,4 +238,4 @@ export function PaymentPrintPreviewModal({
             </div>
         </div>
     );
-} 
+}

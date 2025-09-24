@@ -4,6 +4,7 @@ import "./styles/globals.css";
 import FirebaseInitializer from "./components/shared/FirebaseInitializer";
 import PWAInstallPrompt from "./components/shared/PWAInstallPrompt";
 import { Analytics } from "@vercel/analytics/next"
+import { Toaster } from "react-hot-toast";
 
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({
         <FirebaseInitializer />
         <Analytics />
         <PWAInstallPrompt />
+        <Toaster />
         {children}
       </body>
     </html>

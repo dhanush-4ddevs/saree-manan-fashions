@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { BackupService, BackupImportResult } from '../../services/backupService';
-import { toast } from 'react-hot-toast';
+import { showCountdownToast } from '@/utils/toastUtils';
 import { Download, Upload, FileText, AlertCircle, CheckCircle, Loader2, Shield, Clock } from 'lucide-react';
 
 interface BackupStats {
@@ -25,6 +25,7 @@ export default function BackupManager() {
 
       const blob = await BackupService.createBackupFile(backupData);
       const url = URL.createObjectURL(blob);
+      showCountdownToast('Download started', 'info', 10000);
       const a = document.createElement('a');
       a.href = url;
       const now = new Date();

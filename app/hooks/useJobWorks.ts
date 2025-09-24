@@ -24,7 +24,19 @@ export const useJobWorks = () => {
     fetchJobWorks();
   }, []);
 
-  const jobWorkNames = useMemo(() => jobWorks.map(jobWork => jobWork.name), [jobWorks]);
+  const jobWorkNames = useMemo(() => {
+    const seen = new Set<string>();
+    const uniqueNames: string[] = [];
+    for (const jobWork of jobWorks) {
+      const originalName = (jobWork.name || '').trim();
+      const key = originalName.toLowerCase();
+      if (originalName && !seen.has(key)) {
+        seen.add(key);
+        uniqueNames.push(originalName);
+      }
+    }
+    return uniqueNames;
+  }, [jobWorks]);
 
   return {
     jobWorks,

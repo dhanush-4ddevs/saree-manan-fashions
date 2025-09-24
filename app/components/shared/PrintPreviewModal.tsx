@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Download, Eye, FileText, Printer, Calendar, Package, CheckCircle } from 'lucide-react';
+import { showCountdownToast } from '@/utils/toastUtils';
 import { Voucher } from '@/types/voucher';
 import { printSingleVoucher } from '@/utils/printsinglevoucher';
 
@@ -51,6 +52,7 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
         if (!voucher || !pdfUrl) return;
 
         try {
+            showCountdownToast('Download started', 'info', 10000);
             const doc = await printSingleVoucher(voucher);
             doc.save(`voucher-${voucher.voucher_no}.pdf`);
         } catch (err) {
@@ -63,6 +65,7 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
         if (!voucher || !pdfUrl) return;
 
         try {
+            showCountdownToast('Download started', 'info', 10000);
             const doc = await printSingleVoucher(voucher);
             const totalPages = (doc as any).getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal?.getNumberOfPages?.();
             if (typeof totalPages === 'number' && totalPages > 1) {
@@ -248,4 +251,4 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
             </div>
         </div>
     );
-} 
+}

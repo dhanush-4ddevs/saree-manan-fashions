@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Voucher } from '@/types/voucher';
 import { generateVoucherPDFAlt } from '@/utils/pdfGenerator';
 import { X, Download, Printer, FileText, Calendar, Package, BadgeCheck } from 'lucide-react';
+import { showCountdownToast } from '@/utils/toastUtils';
 import { db } from '@/config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -86,6 +87,7 @@ export function AlternatePrintPreviewModal({ voucher, isOpen, onClose }: Alterna
     const handleDownload = async () => {
         if (!voucher) return;
         try {
+            showCountdownToast('Download started', 'info', 10000);
             const doc = await generateVoucherPDFAlt(voucher);
             doc.save(`voucher-${voucher.voucher_no}.pdf`);
         } catch (e) {
@@ -97,6 +99,7 @@ export function AlternatePrintPreviewModal({ voucher, isOpen, onClose }: Alterna
         const iframeWindow = iframeRef.current?.contentWindow;
         if (!iframeWindow) return;
         try {
+            showCountdownToast('Print started', 'info', 10000);
             iframeWindow.focus();
             iframeWindow.print();
         } catch {
@@ -225,5 +228,3 @@ export function AlternatePrintPreviewModal({ voucher, isOpen, onClose }: Alterna
         </div>
     );
 }
-
-
