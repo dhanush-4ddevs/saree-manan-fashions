@@ -25,6 +25,8 @@ The saree management application uses a dual notification system with separate c
 - `sendPaymentNotification()` - Sends payment notifications
 - `sendVoucherAssignmentNotification()` - Sends voucher assignment notifications
 - `sendVoucherCompletionNotification()` - Sends completion notifications
+- `sendAdminVoucherForwardNotification()` - Sends admin notifications for vendor-to-vendor forwarding - NEW
+- `getAllAdminUsers()` - Helper function to retrieve all admin users - NEW
 
 #### **Event-Based Notifications:**
 ```typescript
@@ -79,10 +81,12 @@ const unsubscribe = onSnapshot(q, (snapshot) => {
 - **Trigger:** Vendor forwards voucher to another vendor or admin
 - **Recipients:**
   - Receiver vendor (if forwarded to vendor)
+  - **All admin users (when forwarded between vendors)** - NEW
   - Admin (if completed and sent to admin)
 - **Message:**
   - Vendor: "Voucher [VoucherNo] (ItemName, Qty: [Quantity]) has been forwarded to you by [SenderName]"
-  - Admin: "Voucher Completion Request Submitted - Voucher [VoucherNo] for item [ItemName] has been returned by [VendorName] and is pending your confirmation"
+  - **Admin (vendor-to-vendor forward): "Voucher Forwarded Between Vendors - Voucher [VoucherNo] (ItemName, Qty: [Quantity]) has been forwarded from [SenderName] to [ReceiverName]."** - NEW
+  - Admin (completion): "Voucher Completion Request Submitted - Voucher [VoucherNo] for item [ItemName] has been returned by [VendorName] and is pending your confirmation"
 
 ### 4. **Payment Processing**
 - **Trigger:** Admin processes payment for vendor

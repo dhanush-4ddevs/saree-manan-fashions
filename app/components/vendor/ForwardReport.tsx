@@ -673,6 +673,16 @@ export default function ForwardReport() {
           isForwarded: true,
           senderName: `${vendor.firstName || ''} ${vendor.surname || ''}`.trim() || vendor.email
         });
+
+        // Notify all admins about vendor-to-vendor forwarding
+        await notificationService.sendAdminVoucherForwardNotification({
+          voucherNo: selectedVoucher.voucher_no,
+          voucherId: selectedVoucher.id,
+          itemName: selectedVoucher.item_details?.item_name || selectedVoucher.item,
+          quantity: qtyToForward,
+          senderName: `${vendor.firstName || ''} ${vendor.surname || ''}`.trim() || vendor.email,
+          receiverName: `${selectedReceiver.firstName || ''} ${selectedReceiver.surname || ''}`.trim() || selectedReceiver.email
+        });
       } else if (reason === 'Complete' && selectedAdmin) {
         // Notify admin about completion request
         await notificationService.createNotification({

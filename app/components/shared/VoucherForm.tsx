@@ -977,14 +977,6 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
             >
               {isSubmitting ? 'Submitting...' : editingVoucher ? 'Update Voucher' : 'Create Voucher'}
             </button>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="px-4 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              PRINT PREVIEW
-            </button>
           </div>
         </form>
       </div>

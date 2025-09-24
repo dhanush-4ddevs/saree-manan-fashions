@@ -194,6 +194,29 @@ export const notificationService = {
   },
 
   /**
+   * Get all admin users
+   * @returns Array of admin users
+   */
+  async getAllAdminUsers(): Promise<{ id: string, data: any }[]> {
+    try {
+      const usersRef = collection(db, 'users');
+      const adminQuery = query(usersRef, where('role', '==', 'admin'));
+      const adminSnapshot = await getDocs(adminQuery);
+
+      const adminList: { id: string, data: any }[] = [];
+      adminSnapshot.forEach((doc) => {
+        adminList.push({ id: doc.id, data: doc.data() });
+      });
+
+      console.log(`Found ${adminList.length} admin users`);
+      return adminList;
+    } catch (error) {
+      console.error('Error getting admin users:', error);
+      return [];
+    }
+  },
+
+  /**
    * Send event-based notifications (to receiver and admin)
    */
   async sendEventNotifications({
@@ -390,6 +413,51 @@ export const notificationService = {
       type: 'voucher_completion',
       extra: { itemName, quantity, isCompleted }
     });
+  },
+
+  /**
+   * Send admin notification when voucher is forwarded between vendors
+   */
+  async sendAdminVoucherForwardNotification({
+    voucherNo,
+    voucherId,
+    itemName,
+    quantity,
+    senderName,
+    receiverName
+  }: {
+    voucherNo: string;
+    voucherId: string;
+    itemName: string;
+    quantity: number;
+    senderName: string;
+    receiverName: string;
+  }) {
+    try {
+      const adminUsers = await this.getAllAdminUsers();
+
+      if (adminUsers.length === 0) {
+        console.log('No admin users found to notify about voucher forwarding');
+        return;
+      }
+
+      const notifications = adminUsers.map(admin =>
+        this.createNotification({
+          userId: admin.id,
+          title: 'Voucher Forwarded Between Vendors',
+          message: `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) has been forwarded from ${senderName} to ${receiverName}.`,
+          voucherNo,
+          eventType: 'vendor_forward',
+          eventId: voucherId,
+          extra: { senderName, receiverName, quantity, itemName }
+        })
+      );
+
+      await Promise.all(notifications);
+      console.log(`Sent voucher forward notifications to ${adminUsers.length} admin(s)`);
+    } catch (error) {
+      console.error('Error sending admin voucher forward notification:', error);
+    }
   },
 
   /**

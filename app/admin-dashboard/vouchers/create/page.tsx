@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArrowLeft, FileText, PlusCircle, Edit, Trash, Printer, Eye, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, FileText, PlusCircle, Edit, Trash, Eye, Image as ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VoucherForm, VoucherFormSubmitData } from '@/components/shared/VoucherForm';
 import { Voucher, VoucherFormData } from '@/types/voucher';
@@ -16,7 +16,6 @@ import { ImageContainer } from '@/components/shared/ImageContainer';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { getNextAvailableVoucherNumber, VoucherNumberOptions } from '@/utils/voucherNumberGenerator';
 import { getCurrentISTTime } from '@/utils/dateFormatter';
-import { PrintPreviewModal } from '@/components/shared/PrintPreviewModal';
 
 function CreateVoucherContent() {
   const router = useRouter();
@@ -24,8 +23,6 @@ function CreateVoucherContent() {
   const [lastVoucherNumber, setLastVoucherNumber] = useState(0);
   const [recentVouchers, setRecentVouchers] = useState<Voucher[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPrintPreview, setShowPrintPreview] = useState(false);
-  const [selectedVoucherForPrint, setSelectedVoucherForPrint] = useState<Voucher | null>(null);
 
   // Generate voucher number using the new utility
   const generateVoucherNo = async () => {
@@ -211,10 +208,7 @@ function CreateVoucherContent() {
     router.push(`/admin-dashboard?voucherId=${voucher.id}&viewMode=details`);
   };
 
-  const handlePrintVoucher = (voucher: Voucher) => {
-    setSelectedVoucherForPrint(voucher);
-    setShowPrintPreview(true);
-  };
+
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -281,12 +275,10 @@ function CreateVoucherContent() {
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handlePrintVoucher(voucher)}
-                        className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => handleEditVoucher(voucher.id)}
+                        className="hidden" // removed Print Preview button
                         title="Print Preview"
-                      >
-                        <Printer className="h-4 w-4" />
-                      </button>
+                      ></button>
                       <button
                         onClick={() => handleEditVoucher(voucher.id)}
                         className="p-1 text-gray-500 hover:text-green-600 transition-colors"
@@ -302,15 +294,7 @@ function CreateVoucherContent() {
           </div>
         )}
 
-        {/* Print Preview Modal */}
-        <PrintPreviewModal
-          voucher={selectedVoucherForPrint}
-          isOpen={showPrintPreview}
-          onClose={() => {
-            setShowPrintPreview(false);
-            setSelectedVoucherForPrint(null);
-          }}
-        />
+
       </div>
     </div>
   );
