@@ -24,8 +24,8 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
           return;
         }
 
-        // Verify this is an admin account
-        if (user.role !== 'admin') {
+        // Verify this is an admin or master admin account
+        if (user.role !== 'admin' && user.role !== 'master_admin') {
           console.error('Not an admin account');
 
           // If vendor trying to access admin page, redirect to vendor dashboard

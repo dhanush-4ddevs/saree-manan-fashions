@@ -126,9 +126,9 @@ export class VoucherService {
     quantityForwarded: number;
     damagedDuringJob?: number;
     damageReason?: string;
-    lrNo: string;
-    lrDate: string;
-    transporterName: string;
+    lrNo?: string;
+    lrDate?: string;
+    transporterName?: string;
     comment: string;
     parentEventId?: string;
   }): Promise<void> {
@@ -157,9 +157,9 @@ export class VoucherService {
           damage_reason: params.damageReason || null
         },
         transport: {
-          lr_no: params.lrNo,
-          lr_date: params.lrDate,
-          transporter_name: params.transporterName
+          lr_no: params.lrNo || '',
+          lr_date: params.lrDate || '',
+          transporter_name: params.transporterName || ''
         }
       }
     };

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Edit, Trash, Printer, Download, Search, ArrowUpDown, RefreshCw, FileText, Filter, Lock, Bell, X, Eye, EyeOff, Users, UserCheck, Shield, Key, Menu } from 'lucide-react';
-import { collection, query, orderBy, getDocs, doc, deleteDoc, Timestamp, updateDoc, onSnapshot, writeBatch } from 'firebase/firestore';
-import { db, getPasswordChangeRequests, resolvePasswordChangeRequest, getCurrentUser } from '@/config/firebase';
+import { collection, query, orderBy, getDocs, doc, deleteDoc, Timestamp, updateDoc, onSnapshot, writeBatch, getDoc } from 'firebase/firestore';
+import { db, getPasswordChangeRequests, resolvePasswordChangeRequest, getCurrentUser, isMasterAdmin } from '@/config/firebase';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { jsPDF } from 'jspdf';
@@ -81,6 +81,13 @@ export default function ListUsers() {
   const [clearingRequests, setClearingRequests] = useState(false);
   const [showDeleteAllConfirmation, setShowDeleteAllConfirmation] = useState(false);
   const [deletingAllUsers, setDeletingAllUsers] = useState(false);
+
+  // Password viewing state for master admin
+  const [showPasswordViewModal, setShowPasswordViewModal] = useState(false);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserData | null>(null);
+  const [userPassword, setUserPassword] = useState('');
+  const [showPasswordConfirmation, setShowPasswordConfirmation] = useState(false);
+  const [passwordViewLoading, setPasswordViewLoading] = useState(false);
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error'; isVisible: boolean }>({
@@ -266,6 +273,48 @@ export default function ListUsers() {
     });
 
     doc.save(`user-${user.userCode || user.id}.pdf`);
+  };
+
+  // Password viewing functions for master admin
+  const handleViewPassword = async (user: UserData) => {
+    if (!isMasterAdmin(currentAdmin)) {
+      showToast('Only master admin can view passwords', 'error');
+      return;
+    }
+
+    setSelectedUserForPassword(user);
+    setShowPasswordConfirmation(true);
+  };
+
+  const confirmPasswordView = async () => {
+    if (!selectedUserForPassword) return;
+
+    setPasswordViewLoading(true);
+    try {
+      // Fetch user data with password
+      const userRef = doc(db, 'users', selectedUserForPassword.id);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserPassword(userData.password || 'No password set');
+        setShowPasswordViewModal(true);
+        setShowPasswordConfirmation(false);
+      } else {
+        showToast('User not found', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching user password:', error);
+      showToast('Failed to fetch password', 'error');
+    } finally {
+      setPasswordViewLoading(false);
+    }
+  };
+
+  const closePasswordView = () => {
+    setShowPasswordViewModal(false);
+    setSelectedUserForPassword(null);
+    setUserPassword('');
   };
 
   const handlePrintAllUsers = () => {
@@ -1001,6 +1050,15 @@ export default function ListUsers() {
                       >
                         <Lock className="h-4 w-4" />
                       </button>
+                      {isMasterAdmin(currentAdmin) && (
+                        <button
+                          onClick={() => handleViewPassword(user)}
+                          className="text-orange-600 hover:text-orange-900 p-1"
+                          title="View Password"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      )}
                       {user.phone !== '9876543210' && (
                         <button
                           onClick={() => handleDelete(user.id)}
@@ -1422,6 +1480,142 @@ export default function ListUsers() {
                   ) : (
                     'Clear All Resolved'
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password View Confirmation Modal */}
+        {showPasswordConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  View User Password
+                </h3>
+                <button
+                  onClick={() => setShowPasswordConfirmation(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                  disabled={passwordViewLoading}
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <Eye className="h-4 w-4 text-orange-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">
+                      Confirm Password View
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-3">
+                      You are about to view the password for <strong>{selectedUserForPassword?.firstName} {selectedUserForPassword?.surname}</strong>.
+                      This action is logged for security purposes.
+                    </p>
+                    <div className="bg-orange-50 border border-orange-200 rounded-md p-3">
+                      <p className="text-sm text-orange-800">
+                        <strong>Security Notice:</strong> Password viewing is restricted to master admin only.
+                        This action will be recorded in the system logs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={() => setShowPasswordConfirmation(false)}
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                  disabled={passwordViewLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmPasswordView}
+                  disabled={passwordViewLoading}
+                  className="w-full sm:w-auto px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-sm"
+                >
+                  {passwordViewLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'View Password'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Password View Modal */}
+        {showPasswordViewModal && selectedUserForPassword && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  User Password
+                </h3>
+                <button
+                  onClick={closePasswordView}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="text-blue-600 font-medium text-sm">
+                        {selectedUserForPassword.firstName.charAt(0)}{selectedUserForPassword.surname.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {selectedUserForPassword.firstName} {selectedUserForPassword.surname}
+                      </h4>
+                      <p className="text-xs text-gray-500">{selectedUserForPassword.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={userPassword}
+                        readOnly
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => navigator.clipboard.writeText(userPassword)}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                        title="Copy to clipboard"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
+                <button
+                  onClick={closePasswordView}
+                  className="w-full sm:w-auto px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                >
+                  Close
                 </button>
               </div>
             </div>

@@ -1477,14 +1477,14 @@ export default function ForwardReport() {
                   <Truck className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600" />
                   TRANSPORT DETAILS
                 </h3>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Required:</strong> Please fill in all LR (Lorry Receipt) details. This information will be shown to the next vendor who receives the voucher, so they know the transport details from your forwarding action.
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Optional:</strong> LR (Lorry Receipt) details can be filled in if available. This information will be shown to the next vendor who receives the voucher, so they know the transport details from your forwarding action.
                   </p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">LR Date <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-blue-700 mb-2">LR Date</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
@@ -1492,14 +1492,13 @@ export default function ForwardReport() {
                   <input
                     type="date"
                     className="pl-8 sm:pl-10 block w-full rounded-md border border-blue-500 py-2 px-3 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                    required
                     value={lrDate}
                     onChange={e => setLrDate(e.target.value)}
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">LR Number <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-blue-700 mb-2">LR Number</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
@@ -1508,14 +1507,13 @@ export default function ForwardReport() {
                     type="text"
                     className="pl-8 sm:pl-10 block w-full rounded-md border border-blue-500 py-2 px-3 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
                     placeholder="Enter LR Number"
-                    required
                     value={lrNumber}
                     onChange={e => setLrNumber(e.target.value)}
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-blue-700 mb-2">Transport Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-blue-700 mb-2">Transport Name</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
@@ -1524,7 +1522,6 @@ export default function ForwardReport() {
                     type="text"
                     className="pl-8 sm:pl-10 block w-full rounded-md border border-blue-500 py-2 px-3 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                     placeholder="Enter Transport Name (e.g. Transport 1)"
-                    required
                     value={transportName}
                     onChange={e => setTransportName(e.target.value)}
                   />

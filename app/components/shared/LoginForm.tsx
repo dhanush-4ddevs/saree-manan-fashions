@@ -93,7 +93,7 @@ export function LoginForm() {
       // Regular login flow
       if (user) {
         // Redirect based on user role
-        if (user.role === 'admin') {
+        if (user.role === 'admin' || user.role === 'master_admin') {
           router.push('/admin-dashboard');
         } else if (user.role === 'vendor') {
           router.push('/vendor/dashboard');
@@ -111,7 +111,7 @@ export function LoginForm() {
 
   const handlePasswordChangeSuccess = () => {
     // After password change, redirect based on user role
-    if (userData.role === 'admin') {
+    if (userData.role === 'admin' || userData.role === 'master_admin') {
       router.push('/admin-dashboard');
     } else if (userData.role === 'vendor') {
       router.push('/vendor/dashboard');

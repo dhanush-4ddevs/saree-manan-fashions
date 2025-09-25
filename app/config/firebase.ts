@@ -69,7 +69,7 @@ const generateUserCode = (firstName: string, surname: string, phone: string, rol
 export interface User {
   uid: string;
   email: string;
-  role: 'admin' | 'vendor';
+  role: 'admin' | 'vendor' | 'master_admin';
   firstName?: string;
   surname?: string;
   phone?: string;
@@ -164,6 +164,11 @@ export const checkUserApproved = async (phone: string): Promise<boolean> => {
   }
 };
 
+// Check if user is master admin
+export const isMasterAdmin = (user: User | null): boolean => {
+  return user?.phone === '9876543210' || user?.role === 'master_admin';
+};
+
 // Create default admin if it doesn't exist
 export const createDefaultAdminIfNotExists = async (): Promise<void> => {
   const adminPhone = '9999999999';
@@ -202,12 +207,55 @@ export const createDefaultAdminIfNotExists = async (): Promise<void> => {
   }
 };
 
+// Create master admin if it doesn't exist
+export const createMasterAdminIfNotExists = async (): Promise<void> => {
+  const masterAdminPhone = '9876543210';
+  const masterAdminPassword = 'master123';
+
+  try {
+    // First check if master admin exists in Firestore
+    const exists = await checkUserExists(masterAdminPhone);
+
+    if (!exists) {
+      console.log('Creating master admin account...');
+
+      const masterAdminData: User = {
+        uid: `master_admin_${Date.now()}`,
+        email: 'master@admin.com',
+        phone: masterAdminPhone,
+        password: masterAdminPassword,
+        role: 'master_admin',
+        firstName: 'Master',
+        surname: 'Admin',
+        userCode: `ma-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        approved: true,
+        isFirstLogin: false,
+        requiresPasswordChange: false
+      };
+
+      await setDoc(doc(db, 'users', masterAdminData.uid), masterAdminData);
+      console.log('Created master admin account successfully');
+    } else {
+      console.log('Master admin already exists');
+    }
+  } catch (error) {
+    console.error('Error in createMasterAdminIfNotExists:', error);
+    throw error;
+  }
+};
+
 // Login with phone/password
 export const loginWithPhoneAndPassword = async (phone: string, password: string) => {
   try {
     // First ensure default admin exists
     if (phone === '9999999999') {
       await createDefaultAdminIfNotExists();
+    }
+    
+    // First ensure master admin exists
+    if (phone === '9876543210') {
+      await createMasterAdminIfNotExists();
     }
 
     // Clean phone number (remove spaces, dashes, etc.)

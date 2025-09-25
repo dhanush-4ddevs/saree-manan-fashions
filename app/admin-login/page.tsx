@@ -40,7 +40,7 @@ export default function AdminLogin() {
 
       if (user.requiresPasswordChange) {
         // First check if user is admin before showing password change
-        if (user.role !== 'admin') {
+        if (user.role !== 'admin' && user.role !== 'master_admin') {
           setError('Access denied. Only admins can login here.');
           setLoading(false);
           return;
@@ -54,7 +54,7 @@ export default function AdminLogin() {
       }
 
       // Regular login flow
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'master_admin') {
         router.push('/admin-dashboard');
       } else {
         setError('Access denied. Only admins can login here.');
