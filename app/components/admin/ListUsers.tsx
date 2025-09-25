@@ -1034,7 +1034,7 @@ export default function ListUsers() {
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-blue-800 mb-2">User Management</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-blue-800 mb-2">All Users</h1>
             <p className="text-sm sm:text-base text-gray-600">Monitor and manage all system users and password requests.</p>
           </div>
 

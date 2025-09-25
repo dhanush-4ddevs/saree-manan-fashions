@@ -29,7 +29,7 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
   const [loading, setLoading] = useState(true);
   const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'details' | 'workflow'>('list');
-  const [listViewType, setListViewType] = useState<'card' | 'table'>('card');
+  const [listViewType, setListViewType] = useState<'card' | 'table'>('table');
   const [activeTab, setActiveTab] = useState('Overview');
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [selectedVoucherForPrint, setSelectedVoucherForPrint] = useState<Voucher | null>(null);
@@ -552,16 +552,6 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
               {/* View Toggle Button */}
               <div className={`${hideHeading ? '' : 'sm:ml-6'} flex items-center rounded-lg p-1 w-full sm:w-auto mt-2 sm:mt-0`}>
                 <button
-                  onClick={() => setListViewType('card')}
-                  className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${listViewType === 'card'
-                    ? 'bg-white text-blue-700 shadow-sm border border-blue-300'
-                    : 'text-gray-600 hover:text-gray-800'
-                    }`}
-                >
-                  <Grid3X3 className="h-4 w-4 mr-1" />
-                  Card View
-                </button>
-                <button
                   onClick={() => setListViewType('table')}
                   className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${listViewType === 'table'
                     ? 'bg-white text-blue-700 shadow-sm border border-blue-300'
@@ -571,6 +561,17 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                   <List className="h-4 w-4 mr-1" />
                   Table View
                 </button>
+                <button
+                  onClick={() => setListViewType('card')}
+                  className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${listViewType === 'card'
+                    ? 'bg-white text-blue-700 shadow-sm border border-blue-300'
+                    : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                >
+                  <Grid3X3 className="h-4 w-4 mr-1" />
+                  Card View
+                </button>
+
               </div>
             </>
           )}
