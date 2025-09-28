@@ -27,6 +27,14 @@ export default function ForwardReport() {
   // State for user names mapping
   const [userNames, setUserNames] = useState<Record<string, string>>({});
 
+  // State for search, sort, and filter
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [jobWorkFilter, setJobWorkFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+
   // Use the job works hook
   const { jobWorkNames, loading: jobWorksLoading, error: jobWorksError } = useJobWorks();
 
@@ -149,7 +157,7 @@ export default function ForwardReport() {
           });
         });
 
-        // Sort by most recent forward event and take last 5
+        // Sort by most recent forward event (get all, not just last 5)
         const sortedVouchers = forwardedVouchers.sort((a, b) => {
           const aEvents = (a as any).events || [];
           const bEvents = (b as any).events || [];
@@ -169,7 +177,7 @@ export default function ForwardReport() {
             Math.max(...bForwardEvents.map((e: any) => toEpochMs(e.timestamp))) : 0;
 
           return bLatestForward - aLatestForward; // Most recent first
-        }).slice(0, 5); // Take only last 5
+        }); // Get all forwarded vouchers
 
         setRecentlyForwardedVouchers(sortedVouchers);
 
@@ -192,6 +200,13 @@ export default function ForwardReport() {
       fetchUserNamesForVouchers(recentlyForwardedVouchers);
     }
   }, [recentlyForwardedVouchers]);
+
+  // useEffect to ensure user names are fetched when search is active
+  useEffect(() => {
+    if (searchTerm && recentlyForwardedVouchers.length > 0) {
+      fetchUserNamesForVouchers(recentlyForwardedVouchers);
+    }
+  }, [searchTerm, recentlyForwardedVouchers]);
 
   // Helper function to calculate forwardable quantity for a voucher
   const calculateForwardableQuantity = (voucher: any, vendorId: string) => {
@@ -820,6 +835,127 @@ export default function ForwardReport() {
       return null;
     }
   };
+
+  // Filter and sort the forwarded vouchers based on search, sort, and filter options
+  const filteredAndSortedVouchers = recentlyForwardedVouchers
+    .filter(voucher => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const voucherNo = voucher.voucher_no?.toLowerCase() || '';
+        const itemName = voucher.item_details?.item_name?.toLowerCase() || '';
+
+        // Search through all forward events for this voucher
+        const allForwardEvents = getAllForwardEvents(voucher);
+        let receiverNames = '';
+
+        // Collect all receiver names from forward events
+        allForwardEvents.forEach((event: any) => {
+          const receiverId = event.details?.receiver_id;
+          if (receiverId) {
+            const receiverName = userNames[receiverId] || receiverId;
+            receiverNames += ' ' + receiverName.toLowerCase();
+          }
+        });
+
+        // Also check job work from forward events
+        let jobWorks = '';
+        allForwardEvents.forEach((event: any) => {
+          if (event.details?.jobWork) {
+            jobWorks += ' ' + event.details.jobWork.toLowerCase();
+          }
+        });
+
+        // Debug logging
+        console.log('Search debug:', {
+          searchTerm: searchLower,
+          voucherNo,
+          itemName,
+          receiverNames,
+          jobWorks,
+          userNames: Object.keys(userNames)
+        });
+
+        if (!voucherNo.includes(searchLower) &&
+            !itemName.includes(searchLower) &&
+            !receiverNames.includes(searchLower) &&
+            !jobWorks.includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (statusFilter !== 'all' && voucher.voucher_status !== statusFilter) {
+        return false;
+      }
+
+      // Job work filter
+      if (jobWorkFilter !== 'all') {
+        const latestEvent = getLatestForwardEvent(voucher);
+        if (latestEvent?.details?.jobWork !== jobWorkFilter) {
+          return false;
+        }
+      }
+
+      // Date filter
+      if (dateFilter !== 'all') {
+        const latestEvent = getLatestForwardEvent(voucher);
+        if (latestEvent?.timestamp) {
+          const eventDate = new Date(latestEvent.timestamp);
+          const now = new Date();
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+          switch (dateFilter) {
+            case 'today':
+              if (eventDate < today) return false;
+              break;
+            case 'week':
+              const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+              if (eventDate < weekAgo) return false;
+              break;
+            case 'month':
+              const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+              if (eventDate < monthAgo) return false;
+              break;
+          }
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const latestEventA = getLatestForwardEvent(a);
+      const latestEventB = getLatestForwardEvent(b);
+
+      let comparison = 0;
+
+      switch (sortBy) {
+        case 'date':
+          const dateA = latestEventA?.timestamp ? new Date(latestEventA.timestamp).getTime() : 0;
+          const dateB = latestEventB?.timestamp ? new Date(latestEventB.timestamp).getTime() : 0;
+          comparison = dateA - dateB;
+          break;
+        case 'voucher':
+          const voucherA = a.voucher_no || '';
+          const voucherB = b.voucher_no || '';
+          comparison = voucherA.localeCompare(voucherB);
+          break;
+        case 'quantity':
+          const qtyA = latestEventA?.details?.quantity_forwarded || 0;
+          const qtyB = latestEventB?.details?.quantity_forwarded || 0;
+          comparison = qtyA - qtyB;
+          break;
+        case 'amount':
+          const amountA = (latestEventA?.details?.quantity_forwarded || 0) * (latestEventA?.details?.price_per_piece || 0);
+          const amountB = (latestEventB?.details?.quantity_forwarded || 0) * (latestEventB?.details?.price_per_piece || 0);
+          comparison = amountA - amountB;
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
 
   // Helper function to get receiver details for a forward event
   const getReceiverDetails = async (receiverId: string) => {
@@ -1561,7 +1697,7 @@ export default function ForwardReport() {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm lg:text-lg font-semibold text-gray-800 flex items-center">
                 <FileText className="h-7 w-7 mr-2 text-blue-600" />
-                Recently Forwarded Vouchers (Last 5)
+                All Forwarded Vouchers
               </h3>
               <div className="flex space-x-2">
                 <button
@@ -1572,14 +1708,99 @@ export default function ForwardReport() {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Refresh
                 </button>
-                {/* <button
-                  type="button"
-                  className="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                  onClick={() => window.print()}
+              </div>
+            </div>
+
+            {/* Search, Sort, and Filter Controls */}
+            <div className="mb-6 space-y-4">
+              {/* Search Bar */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search by voucher number, item name, receiver, or job work..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchTerm('')}
+                      className="px-3 py-2 text-gray-500 hover:text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                      title="Clear search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sort and Filter Controls */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Sort By */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="date">Sort by Date</option>
+                    <option value="voucher">Sort by Voucher No</option>
+                    <option value="quantity">Sort by Quantity</option>
+                    <option value="amount">Sort by Amount</option>
+                  </select>
+
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print List
-                </button> */}
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="completed">Completed</option>
+                  <option value="damaged">Damaged</option>
+                </select>
+
+                {/* Job Work Filter */}
+                <select
+                  value={jobWorkFilter}
+                  onChange={(e) => setJobWorkFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Job Works</option>
+                  {jobWorkNames.map((jobWork) => (
+                    <option key={jobWork} value={jobWork}>{jobWork}</option>
+                  ))}
+                </select>
+
+                {/* Date Filter */}
+                <select
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                </select>
+              </div>
+
+              {/* Results Count */}
+              <div className="text-sm text-gray-600">
+                Showing {filteredAndSortedVouchers.length} of {recentlyForwardedVouchers.length} forwarded vouchers
               </div>
             </div>
             <div className="space-y-3">
@@ -1601,12 +1822,20 @@ export default function ForwardReport() {
                 <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
                   <div className="text-center text-gray-500">
                     <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                    <p>No recently forwarded vouchers found.</p>
+                    <p>No forwarded vouchers found.</p>
                     <p className="text-sm">Vouchers you forward will appear here.</p>
                   </div>
                 </div>
+              ) : filteredAndSortedVouchers.length === 0 ? (
+                <div className="bg-white p-4 rounded-md border border-gray-200 shadow-sm">
+                  <div className="text-center text-gray-500">
+                    <Package className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p>No vouchers match your search criteria.</p>
+                    <p className="text-sm">Try adjusting your search or filter options.</p>
+                  </div>
+                </div>
               ) : (
-                recentlyForwardedVouchers.map((voucher) => {
+                filteredAndSortedVouchers.map((voucher) => {
                   const latestEvent: any = getLatestForwardEvent(voucher);
                   const allForwardEvents = getAllForwardEvents(voucher);
                   if (!latestEvent) {

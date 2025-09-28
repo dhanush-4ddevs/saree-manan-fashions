@@ -47,8 +47,8 @@ if (process.env.NODE_ENV === 'development') {
   verifyStorageConfig();
 }
 
-const generateUserCode = (firstName: string, surname: string, phone: string, role: 'admin' | 'vendor'): string => {
-  const prefix = role === 'admin' ? 'a' : 'v';
+const generateUserCode = (firstName: string, surname: string, phone: string, role: 'admin' | 'vendor' | 'master_admin'): string => {
+  const prefix = role === 'admin' || role === 'master_admin' ? 'a' : 'v';
   const firstInitial = firstName?.charAt(0).toLowerCase() || '';
   const surnameInitial = surname?.charAt(0).toLowerCase() || '';
 
@@ -252,7 +252,7 @@ export const loginWithPhoneAndPassword = async (phone: string, password: string)
     if (phone === '9999999999') {
       await createDefaultAdminIfNotExists();
     }
-    
+
     // First ensure master admin exists
     if (phone === '9876543210') {
       await createMasterAdminIfNotExists();

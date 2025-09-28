@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, ArrowRight } from 'lucide-react';
+import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, ArrowRight, List, Grid3X3 } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
@@ -10,6 +10,8 @@ import { getCurrentUser } from '../../config/firebase';
 import { Voucher, VoucherEvent, generateEventId } from '../../types/voucher';
 import { ImageContainer } from '../shared/ImageContainer';
 import { determineNewStatus, updateVoucherStatus } from '../../utils/voucherStatusManager';
+import { ReceiveReportCardGrid } from './ReceiveReportCardGrid';
+import { AlreadyReceivedCardGrid } from './AlreadyReceivedCardGrid';
 
 interface ReceiveItem {
   id: string; // Composite ID: {voucherId}-{eventId}
@@ -54,6 +56,14 @@ export default function ReceiveReport() {
   const [jobWorkFilter, setJobWorkFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+
+  // Separate state for already received section
+  const [alreadyReceivedViewMode, setAlreadyReceivedViewMode] = useState<'table' | 'card'>('table');
+  const [alreadyReceivedSearchTerm, setAlreadyReceivedSearchTerm] = useState('');
+  const [alreadyReceivedShowFilters, setAlreadyReceivedShowFilters] = useState(false);
+  const [alreadyReceivedStatusFilter, setAlreadyReceivedStatusFilter] = useState<string>('all');
+  const [alreadyReceivedJobWorkFilter, setAlreadyReceivedJobWorkFilter] = useState<string>('all');
 
   // Sorting state for already received table
   const [alreadyReceivedSortField, setAlreadyReceivedSortField] = useState<string>('voucherDate');
@@ -559,9 +569,37 @@ export default function ReceiveReport() {
 
   return (
     <div className="bg-white rounded-lg shadow-md border border-blue-100 p-0">
-      <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-center">
-        <FileText className="h-6 w-6 mr-2" />
-        <h1 className="text-2xl font-bold text-center">VOUCHERS TO BE RECEIVED</h1>
+      <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <FileText className="h-6 w-6 mr-2" />
+          <h1 className="text-2xl font-bold">VOUCHERS TO BE RECEIVED</h1>
+        </div>
+
+        {/* View Toggle Buttons */}
+        <div className="flex items-center rounded-lg p-1 bg-white bg-opacity-20">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
+              viewMode === 'table'
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-white hover:bg-white hover:bg-opacity-20'
+            }`}
+          >
+            <List className="h-4 w-4 mr-1" />
+            Table View
+          </button>
+          <button
+            onClick={() => setViewMode('card')}
+            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
+              viewMode === 'card'
+                ? 'bg-white text-blue-700 shadow-sm'
+                : 'text-white hover:bg-white hover:bg-opacity-20'
+            }`}
+          >
+            <Grid3X3 className="h-4 w-4 mr-1" />
+            Card View
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -571,72 +609,101 @@ export default function ReceiveReport() {
         </div>
       ) : (
         <>
-          <div className="space-y-0">
-            <div className="bg-gray-50 p-4 border border-gray-200">
-              <div className="flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex-1 min-w-64 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                  />
-                  {searchTerm && (
-                    <button onClick={clearSearch} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <div className="relative" ref={sortMenuRef}>
-                    <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
-                      <ArrowUpDown className="h-4 w-4 mr-2" /> Sort
-                    </button>
-                    {showSortMenu && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-20 p-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                        <select value={sortField} onChange={(e) => setSortField(e.target.value)} className="w-full p-2 border rounded-md">
-                          <option value="voucherDate">Voucher Date</option>
-                          <option value="voucherNo">Voucher No</option>
-                          <option value="item">Item</option>
-                        </select>
-                        <div className="flex gap-2 mt-2">
-                          <button onClick={() => setSortDirection('asc')} className={`flex-1 p-2 rounded-md ${sortDirection === 'asc' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
-                            <SortAsc className="h-4 w-4 mx-auto" />
-                          </button>
-                          <button onClick={() => setSortDirection('desc')} className={`flex-1 p-2 rounded-md ${sortDirection === 'desc' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
-                            <SortDesc className="h-4 w-4 mx-auto" />
-                          </button>
-                        </div>
-                      </div>
+          {/* VOUCHERS TO BE RECEIVED Section */}
+          {viewMode === 'card' ? (
+            // Card View for To Be Received
+            <ReceiveReportCardGrid
+              items={vouchers}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onInputChange={handleInputChange}
+              editingVoucherId={editingVoucherId}
+              formData={formData}
+              saving={saving}
+              searchTerm={searchTerm}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              onSearchChange={setSearchTerm}
+              onClearSearch={clearSearch}
+              showFilters={showFilters}
+              onToggleFilters={() => setShowFilters(!showFilters)}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              jobWorkFilter={jobWorkFilter}
+              onJobWorkFilterChange={setJobWorkFilter}
+              uniqueStatuses={uniqueStatuses}
+              uniqueJobWorks={uniqueJobWorks}
+            />
+          ) : (
+            // Table View for To Be Received
+            <div className="space-y-0">
+              <div className="bg-gray-50 p-4 border border-gray-200">
+                <div className="flex flex-wrap gap-4 items-center justify-between">
+                  <div className="flex-1 min-w-64 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                    />
+                    {searchTerm && (
+                      <button onClick={clearSearch} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <X className="h-4 w-4" />
+                      </button>
                     )}
                   </div>
-                  <button onClick={() => setShowFilters(!showFilters)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
-                    <Filter className="h-4 w-4 mr-2" /> Filters
-                  </button>
-                  <button onClick={resetFilters} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
-                    <RotateCcw className="h-4 w-4 mr-2" /> Reset
-                  </button>
+                  <div className="flex gap-2">
+                    <div className="relative" ref={sortMenuRef}>
+                      <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        <ArrowUpDown className="h-4 w-4 mr-2" /> Sort
+                      </button>
+                      {showSortMenu && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-20 p-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                          <select value={sortField} onChange={(e) => setSortField(e.target.value)} className="w-full p-2 border rounded-md">
+                            <option value="voucherDate">Voucher Date</option>
+                            <option value="voucherNo">Voucher No</option>
+                            <option value="item">Item</option>
+                          </select>
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => setSortDirection('asc')} className={`flex-1 p-2 rounded-md ${sortDirection === 'asc' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                              <SortAsc className="h-4 w-4 mx-auto" />
+                            </button>
+                            <button onClick={() => setSortDirection('desc')} className={`flex-1 p-2 rounded-md ${sortDirection === 'desc' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>
+                              <SortDesc className="h-4 w-4 mx-auto" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <button onClick={() => setShowFilters(!showFilters)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                      <Filter className="h-4 w-4 mr-2" /> Filters
+                    </button>
+                    <button onClick={resetFilters} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                      <RotateCcw className="h-4 w-4 mr-2" /> Reset
+                    </button>
+                  </div>
+                </div>
+                {showFilters && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="p-2 border rounded-md">
+                      <option value="all">All Statuses</option>
+                      {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select value={jobWorkFilter} onChange={(e) => setJobWorkFilter(e.target.value)} className="p-2 border rounded-md">
+                      <option value="all">All Job Works</option>
+                      {uniqueJobWorks.map(j => <option key={j} value={j}>{j}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div className="mt-4 text-sm text-gray-600">
+                  Showing {filteredVouchers.length} of {vouchers.length} vouchers.
                 </div>
               </div>
-              {showFilters && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="p-2 border rounded-md">
-                    <option value="all">All Statuses</option>
-                    {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <select value={jobWorkFilter} onChange={(e) => setJobWorkFilter(e.target.value)} className="p-2 border rounded-md">
-                    <option value="all">All Job Works</option>
-                    {uniqueJobWorks.map(j => <option key={j} value={j}>{j}</option>)}
-                  </select>
-                </div>
-              )}
-              <div className="mt-4 text-sm text-gray-600">
-                Showing {filteredVouchers.length} of {vouchers.length} vouchers.
-              </div>
-            </div>
 
             {/* Main tables (pending/received) */}
             {/* To Be Received Table */}
@@ -759,13 +826,73 @@ export default function ReceiveReport() {
               </table>
             </div>
 
-            {/* Already Received Table */}
-            {alreadyReceivedVouchers.length > 0 && (
-              <div className="mt-8">
-                <div className="p-4 bg-green-600 text-white rounded-t-lg mb-4 flex items-center justify-center">
+            </div>
+          )}
+
+          {/* ALREADY RECEIVED Section - Independent of To Be Received view mode */}
+          {alreadyReceivedVouchers.length > 0 && (
+            <div className="mt-12"> {/* Increased spacing */}
+              <div className="p-4 bg-green-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
+                <div className="flex items-center">
                   <FileText className="h-6 w-6 mr-2" />
-                  <h1 className="text-2xl font-bold text-center">ALREADY RECEIVED REPORTS</h1>
+                  <h1 className="text-2xl font-bold">ALREADY RECEIVED REPORTS</h1>
                 </div>
+
+                {/* View Toggle Buttons for Already Received */}
+                <div className="flex items-center rounded-lg p-1 bg-white bg-opacity-20">
+                  <button
+                    onClick={() => setAlreadyReceivedViewMode('table')}
+                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      alreadyReceivedViewMode === 'table'
+                        ? 'bg-white text-green-700 shadow-sm'
+                        : 'text-white hover:bg-white hover:bg-opacity-20'
+                    }`}
+                  >
+                    <List className="h-4 w-4 mr-1" />
+                    Table View
+                  </button>
+                  <button
+                    onClick={() => setAlreadyReceivedViewMode('card')}
+                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
+                      alreadyReceivedViewMode === 'card'
+                        ? 'bg-white text-green-700 shadow-sm'
+                        : 'text-white hover:bg-white hover:bg-opacity-20'
+                    }`}
+                  >
+                    <Grid3X3 className="h-4 w-4 mr-1" />
+                    Card View
+                  </button>
+                </div>
+              </div>
+
+              {alreadyReceivedViewMode === 'card' ? (
+                // Card View for Already Received
+                <AlreadyReceivedCardGrid
+                  items={alreadyReceivedVouchers}
+                  onEdit={handleEdit}
+                  onSave={handleSave}
+                  onCancel={handleCancel}
+                  onInputChange={handleInputChange}
+                  editingVoucherId={editingVoucherId}
+                  formData={formData}
+                  saving={saving}
+                  searchTerm={alreadyReceivedSearchTerm}
+                  sortField={alreadyReceivedSortField}
+                  sortDirection={alreadyReceivedSortDirection}
+                  onSort={handleAlreadyReceivedSort}
+                  onSearchChange={setAlreadyReceivedSearchTerm}
+                  onClearSearch={() => setAlreadyReceivedSearchTerm('')}
+                  showFilters={alreadyReceivedShowFilters}
+                  onToggleFilters={() => setAlreadyReceivedShowFilters(!alreadyReceivedShowFilters)}
+                  statusFilter={alreadyReceivedStatusFilter}
+                  onStatusFilterChange={setAlreadyReceivedStatusFilter}
+                  jobWorkFilter={alreadyReceivedJobWorkFilter}
+                  onJobWorkFilterChange={setAlreadyReceivedJobWorkFilter}
+                  uniqueStatuses={uniqueStatuses}
+                  uniqueJobWorks={uniqueJobWorks}
+                />
+              ) : (
+                // Table View for Already Received
                 <div className="relative border border-green-200 rounded-lg overflow-auto max-h-[70vh] pl-8">
                   <table className="min-w-full bg-white">
                     <thead className="bg-green-50 sticky top-0 z-10">
@@ -1008,9 +1135,9 @@ export default function ReceiveReport() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

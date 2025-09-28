@@ -2103,7 +2103,7 @@ export default function AddUser() {
                         ) : (
                           <>
                             <UserPlus className="h-4 w-4 mr-2" />
-                            Create User
+                            Save New User
                           </>
                         )}
                       </button>
