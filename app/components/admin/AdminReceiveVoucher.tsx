@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, getDocs, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { collection, query, getDocs, doc, getDoc, updateDoc, runTransaction, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Voucher, VoucherEvent, generateEventId } from '@/types/voucher';
 import { getCurrentUser } from '@/config/firebase';
@@ -165,6 +165,12 @@ export default function AdminReceiveVoucher() {
       setLoading(true);
       setError(null);
 
+      // First, fetch all admin users to get their UIDs
+      const usersRef = collection(db, 'users');
+      const adminQuery = query(usersRef, where('role', '==', 'admin'));
+      const adminSnapshot = await getDocs(adminQuery);
+      const adminUids = adminSnapshot.docs.map(doc => doc.id);
+
       // Fetch from main vouchers collection
       const vouchersRef = collection(db, 'vouchers');
       const vouchersQuery = query(vouchersRef);
@@ -175,11 +181,12 @@ export default function AdminReceiveVoucher() {
         const voucherData = docSnap.data() as Voucher;
         if (!voucherData.events || !Array.isArray(voucherData.events)) continue;
 
-        // Only include vouchers that have forward events to admin
+        // Only include vouchers that have forward events to any admin
         const hasForwardEventsToAdmin = voucherData.events.some((event: VoucherEvent) =>
           event.event_type === 'forward' &&
           event.details &&
-          event.details.receiver_id === currentUser.uid
+          event.details.receiver_id &&
+          adminUids.includes(event.details.receiver_id)
         );
 
         if (hasForwardEventsToAdmin) {

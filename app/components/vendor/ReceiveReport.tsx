@@ -69,6 +69,7 @@ export default function ReceiveReport() {
   const [alreadyReceivedSortField, setAlreadyReceivedSortField] = useState<string>('voucherDate');
   const [alreadyReceivedSortDirection, setAlreadyReceivedSortDirection] = useState<'asc' | 'desc'>('desc');
   const [sortedAlreadyReceivedVouchers, setSortedAlreadyReceivedVouchers] = useState<ReceiveItem[]>([]);
+  const [filteredAlreadyReceivedVouchers, setFilteredAlreadyReceivedVouchers] = useState<ReceiveItem[]>([]);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -345,9 +346,48 @@ export default function ReceiveReport() {
     applyFiltersAndSearch();
   }, [vouchers, searchTerm, sortField, sortDirection, statusFilter, jobWorkFilter]);
 
-  useEffect(() => {
-    // Sort already received vouchers
-    const sorted = [...alreadyReceivedVouchers].sort((a, b) => {
+  const applyAlreadyReceivedFiltersAndSearch = () => {
+    let filtered = [...alreadyReceivedVouchers];
+
+    if (alreadyReceivedSearchTerm.trim()) {
+      const searchLower = alreadyReceivedSearchTerm.toLowerCase();
+      filtered = filtered.filter(item => {
+        const searchMatch =
+          item.voucherNo?.toLowerCase().includes(searchLower) ||
+          item.voucherId?.toLowerCase().includes(searchLower) ||
+          item.eventId?.toLowerCase().includes(searchLower) ||
+          item.status?.toLowerCase().includes(searchLower) ||
+          item.item?.toLowerCase().includes(searchLower) ||
+          item.jobWork?.toLowerCase().includes(searchLower) ||
+          item.vendorCode?.toLowerCase().includes(searchLower) ||
+          item.lrNumber?.toLowerCase().includes(searchLower) ||
+          item.transportName?.toLowerCase().includes(searchLower) ||
+          item.lrDate?.toLowerCase().includes(searchLower) ||
+          item.quantityExpected?.toString().includes(searchLower) ||
+          item.quantityReceived?.toString().includes(searchLower) ||
+          item.missing?.toString().includes(searchLower) ||
+          item.damagedOnArrival?.toString().includes(searchLower) ||
+          item.damageReason?.toLowerCase().includes(searchLower) ||
+          item.receiverComment?.toLowerCase().includes(searchLower) ||
+          item.senderName?.toLowerCase().includes(searchLower) ||
+          item.senderId?.toLowerCase().includes(searchLower) ||
+          item.senderType?.toLowerCase().includes(searchLower) ||
+          item.voucherDate?.toLowerCase().includes(searchLower) ||
+          Object.values(item).some(val => String(val).toLowerCase().includes(searchLower));
+
+        return searchMatch;
+      });
+    }
+
+    if (alreadyReceivedStatusFilter !== 'all') {
+      filtered = filtered.filter(item => item.status === alreadyReceivedStatusFilter);
+    }
+
+    if (alreadyReceivedJobWorkFilter !== 'all') {
+      filtered = filtered.filter(item => item.jobWork === alreadyReceivedJobWorkFilter);
+    }
+
+    filtered.sort((a, b) => {
       let aValue = a[alreadyReceivedSortField as keyof ReceiveItem] as any;
       let bValue = b[alreadyReceivedSortField as keyof ReceiveItem] as any;
 
@@ -366,8 +406,12 @@ export default function ReceiveReport() {
       }
     });
 
-    setSortedAlreadyReceivedVouchers(sorted);
-  }, [alreadyReceivedVouchers, alreadyReceivedSortField, alreadyReceivedSortDirection]);
+    setFilteredAlreadyReceivedVouchers(filtered);
+  };
+
+  useEffect(() => {
+    applyAlreadyReceivedFiltersAndSearch();
+  }, [alreadyReceivedVouchers, alreadyReceivedSearchTerm, alreadyReceivedSortField, alreadyReceivedSortDirection, alreadyReceivedStatusFilter, alreadyReceivedJobWorkFilter]);
 
   const resetFilters = () => {
     setSearchTerm('');
@@ -893,8 +937,95 @@ export default function ReceiveReport() {
                 />
               ) : (
                 // Table View for Already Received
-                <div className="relative border border-green-200 rounded-lg overflow-auto max-h-[70vh] pl-8">
-                  <table className="min-w-full bg-white">
+                <div className="space-y-4">
+                  {/* Search and Filter Controls for Already Received */}
+                  <div className="bg-green-50 p-4 border border-green-200 rounded-lg">
+                    <div className="flex flex-wrap gap-4 items-center justify-between">
+                      <div className="flex-1 min-w-64 relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <input
+                          type="text"
+                          placeholder="Search already received vouchers..."
+                          value={alreadyReceivedSearchTerm}
+                          onChange={(e) => setAlreadyReceivedSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
+                        />
+                        {alreadyReceivedSearchTerm && (
+                          <button onClick={() => setAlreadyReceivedSearchTerm('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="relative" ref={sortMenuRef}>
+                          <button onClick={() => setShowSortMenu(!showSortMenu)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                            <ArrowUpDown className="h-4 w-4 mr-2" /> Sort
+                          </button>
+                          {showSortMenu && (
+                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border z-20 p-3">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                              <select value={alreadyReceivedSortField} onChange={(e) => handleAlreadyReceivedSort(e.target.value)} className="w-full p-2 border rounded-md">
+                                <option value="voucherDate">Voucher Date</option>
+                                <option value="voucherNo">Voucher No</option>
+                                <option value="item">Item</option>
+                                <option value="jobWork">Job Work</option>
+                                <option value="vendorCode">Vendor Code</option>
+                                <option value="lrDate">LR Date</option>
+                                <option value="lrNumber">LR Number</option>
+                                <option value="transportName">Transport</option>
+                                <option value="senderName">Sender</option>
+                                <option value="quantityExpected">Expected Qty</option>
+                                <option value="missing">Missing</option>
+                                <option value="damagedOnArrival">Damaged</option>
+                                <option value="status">Status</option>
+                              </select>
+                              <div className="flex gap-2 mt-2">
+                                <button onClick={() => handleAlreadyReceivedSort(alreadyReceivedSortField)} className={`flex-1 p-2 rounded-md ${alreadyReceivedSortDirection === 'asc' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}>
+                                  <SortAsc className="h-4 w-4 mx-auto" />
+                                </button>
+                                <button onClick={() => handleAlreadyReceivedSort(alreadyReceivedSortField)} className={`flex-1 p-2 rounded-md ${alreadyReceivedSortDirection === 'desc' ? 'bg-green-500 text-white' : 'bg-gray-100'}`}>
+                                  <SortDesc className="h-4 w-4 mx-auto" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => setAlreadyReceivedShowFilters(!alreadyReceivedShowFilters)} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                          <Filter className="h-4 w-4 mr-2" /> Filters
+                        </button>
+                        <button onClick={() => {
+                          setAlreadyReceivedSearchTerm('');
+                          setAlreadyReceivedStatusFilter('all');
+                          setAlreadyReceivedJobWorkFilter('all');
+                          setAlreadyReceivedSortField('voucherDate');
+                          setAlreadyReceivedSortDirection('desc');
+                        }} className="flex items-center px-3 py-2 rounded-md bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                          <RotateCcw className="h-4 w-4 mr-2" /> Reset
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Filter Panel for Already Received */}
+                    {alreadyReceivedShowFilters && (
+                      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select value={alreadyReceivedStatusFilter} onChange={(e) => setAlreadyReceivedStatusFilter(e.target.value)} className="p-2 border rounded-md">
+                          <option value="all">All Statuses</option>
+                          {Array.from(new Set(alreadyReceivedVouchers.map(v => v.status))).sort().map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        <select value={alreadyReceivedJobWorkFilter} onChange={(e) => setAlreadyReceivedJobWorkFilter(e.target.value)} className="p-2 border rounded-md">
+                          <option value="all">All Job Works</option>
+                          {Array.from(new Set(alreadyReceivedVouchers.map(v => v.jobWork))).sort().map(j => <option key={j} value={j}>{j}</option>)}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="mt-4 text-sm text-gray-600">
+                      Showing {filteredAlreadyReceivedVouchers.length} of {alreadyReceivedVouchers.length} already received vouchers.
+                    </div>
+                  </div>
+
+                  <div className="relative border border-green-200 rounded-lg overflow-auto max-h-[70vh] pl-8">
+                    <table className="min-w-full bg-white">
                     <thead className="bg-green-50 sticky top-0 z-10">
                       <tr>
                         <th className="border border-green-200 p-2 text-green-700 bg-green-50">SN</th>
@@ -1038,7 +1169,7 @@ export default function ReceiveReport() {
                       </tr>
                     </thead>
                     <tbody>
-                      {sortedAlreadyReceivedVouchers.map((item, index) => {
+                      {filteredAlreadyReceivedVouchers.map((item, index) => {
                         const isEditing = editingVoucherId === item.id;
                         const isHighlighted = highlightedVoucherId === item.voucherId;
                         const currentData = formData[item.id] || {};
@@ -1133,7 +1264,8 @@ export default function ReceiveReport() {
                         )
                       })}
                     </tbody>
-                  </table>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>

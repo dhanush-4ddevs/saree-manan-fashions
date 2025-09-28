@@ -105,7 +105,7 @@ export default function AdminDashboard() {
         // Expand the related menu if needed
         if (tab === 'All Vouchers' || tab === 'Create New Voucher' || tab === 'Completion Requests' || tab === 'Receive Vouchers') {
           setExpandedMenus(prev => ({ ...prev, 'Voucher Management': true }));
-        } else if (tab === 'Add User' || tab === 'List Users' || tab === 'My Profile') {
+        } else if (tab === 'Add User' || tab === 'All Users' || tab === 'My Profile') {
           setExpandedMenus(prev => ({ ...prev, 'User Management': true }));
         }
       }
@@ -253,7 +253,7 @@ export default function AdminDashboard() {
       isCategory: true,
       subItems: [
         { name: 'Add User', icon: UserPlus },
-        { name: 'List Users', icon: Users },
+        { name: 'All Users', icon: Users },
         { name: 'My Profile', icon: User }
       ]
     },
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
     {
       name: 'Users', icon: Users, hasSubMenu: true, subItems: [
         { name: 'Add User', icon: UserPlus },
-        { name: 'List Users', icon: Users },
+        { name: 'All Users', icon: Users },
         { name: 'My Profile', icon: User }
       ]
     },
@@ -412,8 +412,8 @@ export default function AdminDashboard() {
       setActivePage('Dashboard');
     } else if (subItemName === 'Add User') {
       router.push('/admin-dashboard?tab=Add User');
-    } else if (subItemName === 'List Users') {
-      router.push('/admin-dashboard?tab=List Users');
+    } else if (subItemName === 'All Users') {
+      router.push('/admin-dashboard?tab=All Users');
     } else if (subItemName === 'My Profile') {
       router.push('/admin-dashboard?tab=My Profile');
     } else if (subItemName === 'Create New Voucher') {
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
           return <AllVouchers onCreateVoucher={() => navigateTo('Create New Voucher')} />;
         case 'Add User':
           return <AddUser />;
-        case 'List Users':
+        case 'All Users':
           return <ListUsers />;
         case 'My Profile':
           return <MyProfile />;
