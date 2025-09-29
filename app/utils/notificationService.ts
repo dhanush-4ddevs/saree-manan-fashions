@@ -461,6 +461,49 @@ export const notificationService = {
   },
 
   /**
+   * Send admin notification when voucher completion request is submitted
+   */
+  async sendAdminCompletionNotification({
+    voucherNo,
+    voucherId,
+    itemName,
+    quantity,
+    senderName
+  }: {
+    voucherNo: string;
+    voucherId: string;
+    itemName: string;
+    quantity: number;
+    senderName: string;
+  }) {
+    try {
+      const adminUsers = await this.getAllAdminUsers();
+
+      if (adminUsers.length === 0) {
+        console.log('No admin users found to notify about voucher completion');
+        return;
+      }
+
+      const notifications = adminUsers.map(admin =>
+        this.createNotification({
+          userId: admin.id,
+          title: 'Voucher Completion Request',
+          message: `Voucher ${voucherNo} (${itemName}, Qty: ${quantity}) has been sent to Admin by ${senderName} for completion.`,
+          voucherNo,
+          eventType: 'completion_request',
+          eventId: voucherId,
+          extra: { senderName, quantity, itemName }
+        })
+      );
+
+      await Promise.all(notifications);
+      console.log(`Sent voucher completion notifications to ${adminUsers.length} admin(s)`);
+    } catch (error) {
+      console.error('Error sending admin completion notification:', error);
+    }
+  },
+
+  /**
    * Create a vendor notification (separate from admin notifications)
    */
   async createVendorNotification({
