@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { signOut, getCurrentUser } from '../../config/firebase';
 import { db } from '../../lib/firebase';
 import { collection, getDocs, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 function CompletionRequestsPageContent() {
   const router = useRouter();
@@ -197,6 +198,11 @@ function CompletionRequestsPageContent() {
             {/* Desktop nav items */}
             <div className="hidden md:flex items-center space-x-4">
               {userData && (
+                <div>
+                  <NotificationBell userId={userData.uid} iconColor="text-white" />
+                </div>
+              )}
+              {userData && (
                 <button
                   onClick={() => handleSubItemClick('My Profile')}
                   className="flex items-center bg-blue-800/20 px-3 py-1.5 rounded-md hover:bg-blue-800/30 transition-colors"
@@ -229,6 +235,11 @@ function CompletionRequestsPageContent() {
 
             {/* Mobile actions */}
             <div className="md:hidden flex items-center">
+              {userData && (
+                <div className="mr-2">
+                  <NotificationBell userId={userData.uid} iconColor="text-white" />
+                </div>
+              )}
               <button
                 onClick={handleLogout}
                 className="text-white p-2"
