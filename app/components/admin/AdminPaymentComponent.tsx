@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { db, getCurrentUser, User } from '../../config/firebase';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { Printer, CheckCircle, CreditCard, IndianRupee, Filter, SortAsc, SortDesc, Search, Calendar, DollarSign, TrendingUp, TrendingDown, RefreshCw, Download, Eye, MoreHorizontal, Clock, Info } from 'lucide-react';
@@ -66,8 +66,7 @@ export default function AdminPaymentComponent() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       setLoading(true);
       // Fetch vendors
       const usersSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'vendor')));
@@ -146,9 +145,11 @@ export default function AdminPaymentComponent() {
       });
       setRows(paymentRows);
       setLoading(false);
-    };
+  }, []);
+
+  useEffect(() => {
     fetchData();
-  }, [saving]);
+  }, [fetchData, saving]);
 
   useEffect(() => {
     // Fetch current admin user on mount
@@ -283,6 +284,15 @@ export default function AdminPaymentComponent() {
               <p className="text-gray-600 text-sm">Manage vendor payments and financial transactions</p>
             </div>
             <div className="flex items-center space-x-3 mt-3 lg:mt-0">
+              <button
+                onClick={fetchData}
+                disabled={loading}
+                className={`flex items-center px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm disabled:opacity-60`}
+                title="Refresh data"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"

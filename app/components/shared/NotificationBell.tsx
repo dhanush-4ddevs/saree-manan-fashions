@@ -16,6 +16,9 @@ interface Notification {
   voucherId?: string;
   paymentId?: string;
   type?: 'payment' | 'completion_request' | 'system' | 'voucher_received';
+  // Admin notifications use eventType/eventId instead of type/voucherId
+  eventType?: string;
+  eventId?: string;
   amountPaid?: number;
   voucherNo?: string; // Added for grouping
 }
@@ -111,21 +114,25 @@ export function NotificationBell({ userId, iconColor = 'text-white' }: Notificat
       const currentUser = await getCurrentUser();
       const isVendor = currentUser?.role === 'vendor';
 
+      // Normalize fields across admin/vendor notifications
+      const normalizedType = notification.type || notification.eventType;
+      const normalizedVoucherId = notification.voucherId || notification.eventId;
+
       // Navigate based on notification type and user role
-      if (notification.type === 'completion_request' && notification.voucherId) {
-        router.push(`/admin-dashboard?tab=Completion Requests`);
-      } else if (notification.type === 'payment' && notification.voucherId) {
+      if (normalizedType === 'completion_request' && normalizedVoucherId) {
+        router.push(`/admin-dashboard/completion-requests`);
+      } else if (normalizedType === 'payment' && normalizedVoucherId) {
         // For vendors seeing payment notifications
         router.push(`/vendor/my-profile`);
         // Set the active tab to 'account' - you would need to store this in localStorage or URL params
         window.localStorage.setItem('activeProfileTab', 'account');
-      } else if (notification.voucherId) {
+      } else if (normalizedVoucherId) {
         if (isVendor) {
           // For vendors: route to their receive report page with the specific voucher
-          router.push(`/vendor/receive-report?voucherId=${notification.voucherId}`);
+          router.push(`/vendor/receive-report?voucherId=${normalizedVoucherId}`);
         } else {
           // For admins: route to All Vouchers with voucher details view
-          router.push(`/admin-dashboard?tab=All%20Vouchers&viewMode=details&voucherId=${notification.voucherId}`);
+          router.push(`/admin-dashboard?tab=All%20Vouchers&viewMode=details&voucherId=${normalizedVoucherId}`);
         }
       }
 
