@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import {
   FileText,
@@ -40,9 +39,9 @@ const formatDate = (dateInput: any): string => {
     if (isNaN(d.getTime())) return 'Not available';
 
     // Use toLocaleString with specific options to ensure consistent formatting
-    return d.toLocaleString('en-US', {
+    return d.toLocaleString('en-GB', {
       year: 'numeric',
-      month: '2-digit',
+      month: 'short',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
@@ -213,7 +212,15 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" title="Real-time tracking active"></div>
                 <span className="text-green-600 font-medium">Live</span>
               </div>
-              <div>Last sync: {lastUpdated.toLocaleString()}</div>
+              <div>Last sync: {lastUpdated.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+              })}</div>
             </div>
           )}
           <button
@@ -383,13 +390,13 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                             {event.details.quantity_received && (
                               <div className="flex items-center px-2 py-1 bg-purple-100 text-purple-800 rounded-lg">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Received: {event.details.quantity_received}</span>
+                                <span className="font-medium text-xs">Received: {(event.details.quantity_received ?? 0) - (event.details.discrepancies?.damaged_on_arrival ?? 0)}</span>
                               </div>
                             )}
                             {event.details.quantity_forwarded && (
                               <div className="flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-lg">
                                 <ArrowRight className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Forwarded: {event.details.quantity_forwarded}</span>
+                                <span className="font-medium text-xs">Forwarded: {(event.details.quantity_forwarded ?? 0) - (event.details.discrepancies?.damaged_after_job ?? 0)}</span>
                               </div>
                             )}
                           </div>
@@ -568,13 +575,13 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                 {action.details.quantity_received && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <CheckCircle className="h-3 w-3 mr-2 text-purple-500" />
-                                    <span className="font-medium">Received: {action.details.quantity_received}</span>
+                                    <span className="font-medium">Received: {(action.details.quantity_received ?? 0) - (action.details.discrepancies?.damaged_on_arrival ?? 0)}</span>
                                   </div>
                                 )}
                                 {action.details.quantity_forwarded && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <ArrowRight className="h-3 w-3 mr-2 text-orange-500" />
-                                    <span className="font-medium">Forwarded: {action.details.quantity_forwarded}</span>
+                                    <span className="font-medium">Forwarded: {(action.details.quantity_forwarded ?? 0) - (action.details.discrepancies?.damaged_after_job ?? 0)}</span>
                                   </div>
                                 )}
                                 {action.details.discrepancies?.damaged_on_arrival && action.details.discrepancies.damaged_on_arrival > 0 && (
