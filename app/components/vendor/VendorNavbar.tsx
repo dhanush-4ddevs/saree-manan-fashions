@@ -100,8 +100,7 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
     {
       name: 'Accounts',
       icon: CreditCard,
-      path: '/vendor/my-profile',
-      action: 'account-tab'
+      path: '/vendor/accounts'
     },
     {
       name: 'My Profile',
@@ -111,15 +110,6 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
   ];
 
   const handleMenuClick = (path: string, action?: string) => {
-    if (action === 'account-tab') {
-      // Set the active tab to 'account' in localStorage
-      localStorage.setItem('activeProfileTab', 'account');
-      setActiveProfileTab('account');
-      // Always navigate when there's an action, even if on same path
-      router.push(path);
-      return;
-    }
-
     // Navigating directly to My Profile should clear any stored sub-tab
     if (path === '/vendor/my-profile') {
       try {
@@ -237,18 +227,7 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
             {menuItems.map((item) => {
               const Icon = item.icon;
 
-              const isActive = (() => {
-                // Base active when matching path
-                const baseActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
-                // Special handling so Accounts and My Profile don't both appear active
-                if (item.action === 'account-tab') {
-                  return pathname === '/vendor/my-profile' && activeProfileTab === 'account';
-                }
-                if (item.name === 'My Profile' && pathname === '/vendor/my-profile') {
-                  return activeProfileTab !== 'account';
-                }
-                return baseActive;
-              })();
+              const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
 
               return (
                 <button
