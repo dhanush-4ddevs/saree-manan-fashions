@@ -51,17 +51,17 @@ export default function AdminReceiveVoucher() {
   const pendingVouchers = React.useMemo(() => {
     if (!adminUid) return allVouchers;
     return allVouchers.filter(voucher => {
-      // Get forward events to admin that haven't been received yet
+      // Get forward events to generic 'admin' that haven't been received yet
       const forwardEventsToAdmin = voucher.events.filter((event: VoucherEvent) =>
         event.event_type === 'forward' &&
         event.details &&
-        event.details.receiver_id === adminUid
+        event.details.receiver_id === 'admin'
       );
 
-      // Check which forward events have corresponding receive events
+      // Check which forward events have corresponding receive events (by ANY admin)
       const receivedForwardEventIds = new Set(
         voucher.events
-          .filter((event: VoucherEvent) => event.event_type === 'receive' && event.user_id === adminUid)
+          .filter((event: VoucherEvent) => event.event_type === 'receive')
           .map((event: VoucherEvent) => event.parent_event_id)
       );
 
@@ -73,17 +73,17 @@ export default function AdminReceiveVoucher() {
   const alreadyReceived = React.useMemo(() => {
     if (!adminUid) return [];
     return allVouchers.filter(voucher => {
-      // Get forward events to admin
+      // Get forward events to generic 'admin'
       const forwardEventsToAdmin = voucher.events.filter((event: VoucherEvent) =>
         event.event_type === 'forward' &&
         event.details &&
-        event.details.receiver_id === adminUid
+        event.details.receiver_id === 'admin'
       );
 
-      // Check which forward events have corresponding receive events
+      // Check which forward events have corresponding receive events (by ANY admin)
       const receivedForwardEventIds = new Set(
         voucher.events
-          .filter((event: VoucherEvent) => event.event_type === 'receive' && event.user_id === adminUid)
+          .filter((event: VoucherEvent) => event.event_type === 'receive')
           .map((event: VoucherEvent) => event.parent_event_id)
       );
 
@@ -165,7 +165,7 @@ export default function AdminReceiveVoucher() {
       setLoading(true);
       setError(null);
 
-      // First, fetch all admin users to get their UIDs
+      // First, fetch all admin users to get their UIDs (kept for potential future use)
       const usersRef = collection(db, 'users');
       const adminQuery = query(usersRef, where('role', '==', 'admin'));
       const adminSnapshot = await getDocs(adminQuery);
@@ -181,12 +181,11 @@ export default function AdminReceiveVoucher() {
         const voucherData = docSnap.data() as Voucher;
         if (!voucherData.events || !Array.isArray(voucherData.events)) continue;
 
-        // Only include vouchers that have forward events to any admin
+        // Only include vouchers that have forward events to the generic 'admin'
         const hasForwardEventsToAdmin = voucherData.events.some((event: VoucherEvent) =>
           event.event_type === 'forward' &&
           event.details &&
-          event.details.receiver_id &&
-          adminUids.includes(event.details.receiver_id)
+          event.details.receiver_id === 'admin'
         );
 
         if (hasForwardEventsToAdmin) {
@@ -345,9 +344,9 @@ export default function AdminReceiveVoucher() {
   // Helper function to check if a forward event has been received
   const isForwardEventReceived = (voucher: Voucher, forwardEvent: VoucherEvent): boolean => {
     if (!adminUid) return false;
+    // For generic 'admin' forwards, check if ANY admin has received it
     return voucher.events.some((event: VoucherEvent) =>
       event.event_type === 'receive' &&
-      event.user_id === adminUid &&
       event.parent_event_id === forwardEvent.event_id
     );
   };
@@ -359,12 +358,13 @@ export default function AdminReceiveVoucher() {
     const forwardEventsToAdmin = voucher.events.filter((event: VoucherEvent) =>
       event.event_type === 'forward' &&
       event.details &&
-      event.details.receiver_id === adminUid
+      event.details.receiver_id === 'admin'
     );
 
+    // For generic 'admin' forwards, check if ANY admin has received it
     const receivedForwardEventIds = new Set(
       voucher.events
-        .filter((event: VoucherEvent) => event.event_type === 'receive' && event.user_id === adminUid)
+        .filter((event: VoucherEvent) => event.event_type === 'receive')
         .map((event: VoucherEvent) => event.parent_event_id)
     );
 
@@ -378,12 +378,12 @@ export default function AdminReceiveVoucher() {
     const forwardEventsToAdmin = voucher.events.filter((event: VoucherEvent) =>
       event.event_type === 'forward' &&
       event.details &&
-      event.details.receiver_id === adminUid
+      event.details.receiver_id === 'admin'
     );
 
     const receivedForwardEventIds = new Set(
       voucher.events
-        .filter((event: VoucherEvent) => event.event_type === 'receive' && event.user_id === adminUid)
+        .filter((event: VoucherEvent) => event.event_type === 'receive')
         .map((event: VoucherEvent) => event.parent_event_id)
     );
 

@@ -580,7 +580,7 @@ export default function ForwardReport() {
   const [admins, setAdmins] = useState<any[]>([]);
   const [selectedAdmin, setSelectedAdmin] = useState<any>(null);
 
-  // Fetch admins when reason is 'Complete'
+  // Fetch admins when reason is 'Complete' - keep for validation but don't require selection
   useEffect(() => {
     if (reason === 'Complete') {
       const fetchAdmins = async () => {
@@ -590,6 +590,10 @@ export default function ForwardReport() {
           const snap = await getDocs(q);
           const adminList = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
           setAdmins(adminList);
+          // Auto-set to generic admin for completion
+          if (adminList.length > 0) {
+            setSelectedAdmin({ id: 'admin', firstName: 'Admin', surname: '', email: 'admin@system' });
+          }
         } catch (err) {
           setAdmins([]);
         }
@@ -631,7 +635,8 @@ export default function ForwardReport() {
   // Form submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVoucher || !vendor || (reason === 'Forwarded' ? !selectedReceiver : !selectedAdmin)) return;
+    if (!selectedVoucher || !vendor || (reason === 'Forwarded' && !selectedReceiver)) return;
+    // For 'Complete' reason, we no longer require specific admin selection
     // Create new forward event
     const newEvent: any = {
       event_id: `evnt_${selectedVoucher.voucher_no}_${(selectedVoucher.events?.length || 0) + 1}`,
@@ -642,7 +647,7 @@ export default function ForwardReport() {
       details: {
         jobWork: reason === 'Forwarded' ? jobWork : null,
         sender_id: vendor.uid,
-        receiver_id: reason === 'Forwarded' ? selectedReceiver.id : selectedAdmin.id,
+        receiver_id: reason === 'Forwarded' ? selectedReceiver.id : 'admin', // Use generic 'admin' for completion
         quantity_forwarded: qtyToForward,
         price_per_piece: pricePerPiece,
         discrepancies: {
@@ -698,15 +703,14 @@ export default function ForwardReport() {
           senderName: `${vendor.firstName || ''} ${vendor.surname || ''}`.trim() || vendor.email,
           receiverName: `${selectedReceiver.firstName || ''} ${selectedReceiver.surname || ''}`.trim() || selectedReceiver.email
         });
-      } else if (reason === 'Complete' && selectedAdmin) {
-        // Notify admin about completion request
-        await notificationService.createNotification({
-          userId: selectedAdmin.id,
-          title: 'Voucher Completion Request Submitted',
-          message: `Voucher ${selectedVoucher.voucher_no} for item ${selectedVoucher.item_details?.item_name || selectedVoucher.item} has been returned by ${(`${vendor.firstName || ''} ${vendor.surname || ''}`.trim() || vendor.email)} and is pending your confirmation.`,
+      } else if (reason === 'Complete') {
+        // Notify all admins about completion request
+        await notificationService.sendAdminCompletionNotification({
           voucherNo: selectedVoucher.voucher_no,
-          eventType: 'completion_request',
-          eventId: selectedVoucher.id
+          voucherId: selectedVoucher.id,
+          itemName: selectedVoucher.item_details?.item_name || selectedVoucher.item,
+          quantity: qtyToForward,
+          senderName: `${vendor.firstName || ''} ${vendor.surname || ''}`.trim() || vendor.email
         });
       }
 
@@ -1538,75 +1542,13 @@ export default function ForwardReport() {
                   </div>
                 </>
               )}
-              {/* Show admin dropdown if reason is Complete */}
+              {/* Show info message when reason is Complete */}
               {reason === 'Complete' && (
-                <>
-                  <div className="mb-4">
-                    <label htmlFor="adminSelect" className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Admin
-                    </label>
-                    <select
-                      id="adminSelect"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm py-2 px-3"
-                      required
-                      value={selectedAdmin?.id || ''}
-                      onChange={handleAdminChange}
-                    >
-                      <option value="">{admins.length === 0 ? 'Loading admins...' : 'Select an admin'}</option>
-                      {admins.map(a => (
-                        <option key={a.id} value={a.id}>
-                          {a.companyName || (a.firstName + ' ' + a.surname)} ({a.userCode || a.email})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Autofill admin details */}
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">Admin's Company Name</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm bg-gray-50"
-                      value={selectedAdmin?.companyName || ''}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">Admin's Address</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm bg-gray-50"
-                      value={selectedAdmin?.address ? `${selectedAdmin.address.line1}, ${selectedAdmin.address.city}` : ''}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">Admin's Phone</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm bg-gray-50"
-                      value={selectedAdmin?.phone || ''}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">Admin's Email</label>
-                    <input
-                      type="email"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm bg-gray-50"
-                      value={selectedAdmin?.email || ''}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-blue-700 mb-2">Admin's Code</label>
-                    <input
-                      type="text"
-                      className="mt-1 block w-full rounded-md border border-blue-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 text-sm bg-gray-50"
-                      value={selectedAdmin?.userCode || ''}
-                      readOnly
-                    />
-                  </div>
-                </>
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-sm text-blue-800">
+                    This voucher will be sent to Admin for completion. Any admin can receive and process this request.
+                  </p>
+                </div>
               )}
               <div className="col-span-1 lg:col-span-2 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100 mb-2 mt-4">
                 <h3 className="text-base sm:text-lg font-semibold text-blue-800 flex items-center mb-2 sm:mb-4">

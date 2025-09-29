@@ -68,6 +68,7 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
   // Helper to fetch user display name from Firestore
   const fetchUserName = async (uid: string) => {
     if (!uid) return uid;
+    if (uid === 'admin') return 'Admin'; // Handle generic admin case
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
@@ -96,11 +97,24 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
     });
     const missing = Array.from(userIds).filter(uid => !userNames[uid]);
     if (missing.length === 0) return;
-    Promise.all(missing.map(uid => fetchUserName(uid))).then(names => {
-      const updates: { [uid: string]: string } = {};
-      missing.forEach((uid, i) => { updates[uid] = names[i]; });
-      setUserNames(prev => ({ ...prev, ...updates }));
+    // Handle generic 'admin' case directly
+    const updates: { [uid: string]: string } = {};
+    const toFetch = missing.filter(uid => {
+      if (uid === 'admin') {
+        updates[uid] = 'Admin';
+        return false;
+      }
+      return true;
     });
+
+    if (toFetch.length > 0) {
+      Promise.all(toFetch.map(uid => fetchUserName(uid))).then(names => {
+        toFetch.forEach((uid, i) => { updates[uid] = names[i]; });
+        setUserNames(prev => ({ ...prev, ...updates }));
+      });
+    } else {
+      setUserNames(prev => ({ ...prev, ...updates }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voucher]);
 
