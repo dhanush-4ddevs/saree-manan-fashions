@@ -390,13 +390,15 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                             {event.details.quantity_received && (
                               <div className="flex items-center px-2 py-1 bg-purple-100 text-purple-800 rounded-lg">
                                 <CheckCircle className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Received: {(event.details.quantity_received ?? 0) - (event.details.discrepancies?.damaged_on_arrival ?? 0)}</span>
+                                <span className="font-medium text-xs">Received: {event.details.discrepancies?.damaged_on_arrival != null
+                                  ? (event.details.quantity_received ?? 0) - event.details.discrepancies.damaged_on_arrival
+                                  : event.details.quantity_received}</span>
                               </div>
                             )}
                             {event.details.quantity_forwarded && (
                               <div className="flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-lg">
                                 <ArrowRight className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Forwarded: {(event.details.quantity_forwarded ?? 0) - (event.details.discrepancies?.damaged_after_job ?? 0)}</span>
+                                <span className="font-medium text-xs">Forwarded: {(event.details.quantity_forwarded)}</span>
                               </div>
                             )}
                           </div>
@@ -575,13 +577,15 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                 {action.details.quantity_received && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <CheckCircle className="h-3 w-3 mr-2 text-purple-500" />
-                                    <span className="font-medium">Received: {(action.details.quantity_received ?? 0) - (action.details.discrepancies?.damaged_on_arrival ?? 0)}</span>
+                                    <span className="font-medium">Received: {action.details.discrepancies?.damaged_on_arrival != null
+                                      ? (action.details.quantity_received ?? 0) - action.details.discrepancies.damaged_on_arrival
+                                      : action.details.quantity_received}</span>
                                   </div>
                                 )}
                                 {action.details.quantity_forwarded && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <ArrowRight className="h-3 w-3 mr-2 text-orange-500" />
-                                    <span className="font-medium">Forwarded: {(action.details.quantity_forwarded ?? 0) - (action.details.discrepancies?.damaged_after_job ?? 0)}</span>
+                                    <span className="font-medium">Forwarded: {(action.details.quantity_forwarded)}</span>
                                   </div>
                                 )}
                                 {action.details.discrepancies?.damaged_on_arrival && action.details.discrepancies.damaged_on_arrival > 0 && (
