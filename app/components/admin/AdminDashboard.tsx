@@ -60,6 +60,9 @@ export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
+  // Add state for mobile sub-menu visibility
+  const [mobileSubMenuOpen, setMobileSubMenuOpen] = useState<string | null>(null);
+
   // Add state for stat card interactions
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -85,6 +88,25 @@ export default function AdminDashboard() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isSidebarOpen]);
+
+  // Close mobile submenu when clicking outside of it
+  useEffect(() => {
+    function handleClickOutsideMobile(event: MouseEvent) {
+      const target = event.target as Node;
+      const mobileMenu = document.querySelector('.mobile-bottom-dock');
+
+      if (mobileSubMenuOpen && mobileMenu && !mobileMenu.contains(target)) {
+        setMobileSubMenuOpen(null);
+      }
+    }
+
+    if (mobileSubMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutsideMobile);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutsideMobile);
+      };
+    }
+  }, [mobileSubMenuOpen]);
 
   // Check for URL parameters to set active page
   useEffect(() => {
@@ -311,9 +333,6 @@ export default function AdminDashboard() {
 
   ];
 
-  // Add state for mobile sub-menu visibility
-  const [mobileSubMenuOpen, setMobileSubMenuOpen] = useState<string | null>(null);
-
   const toggleMenu = (categoryName: string) => {
     setExpandedMenus(prevState => ({
       ...prevState,
@@ -391,6 +410,15 @@ export default function AdminDashboard() {
 
   const handleMobileMenuClick = (item: any) => {
     if (item.hasSubMenu) {
+      // Load the main page in background for Users and Vouchers
+      if (item.name === 'Users') {
+        navigateTo('All Users');
+      } else if (item.name === 'Vouchers') {
+        navigateTo('All Vouchers');
+      } else if (item.name === 'System') {
+        navigateTo('Backup ');
+      }
+
       // Toggle sub-menu visibility
       setMobileSubMenuOpen(mobileSubMenuOpen === item.name ? null : item.name);
     } else if (item.action) {
@@ -859,7 +887,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Mobile Bottom Dock Menu */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-blue-200 shadow-lg z-40">
+      <div className="mobile-bottom-dock md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-blue-200 shadow-lg z-40">
         {/* Mobile Sub-menu Box */}
         {mobileSubMenuOpen && (
           <div className="bg-white border-b border-blue-200 shadow-lg">
