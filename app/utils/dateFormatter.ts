@@ -7,25 +7,23 @@ export const formatDate = (date: string | Date | any): string => {
   if (!date) return 'N/A';
 
   try {
-    // Handle Firestore timestamps
-    if (date && typeof date.toDate === 'function') {
-      return date.toDate().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        timeZone: 'Asia/Kolkata'
-      });
-    }
+    const toDate: Date = date && typeof date.toDate === 'function' ? date.toDate() : (typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : new Date()));
 
-    // Handle ISO strings or Date objects
-    const dateObj = typeof date === 'string' ? new Date(date) : date instanceof Date ? date : new Date();
-
-    return dateObj.toLocaleDateString('en-US', {
-      year: 'numeric',
+    // Use Intl parts to ensure IST timezone and build dd-MMM-yyyy with hyphens
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
       month: 'short',
-      day: 'numeric',
-      timeZone: 'Asia/Kolkata'
-    });
+      year: 'numeric'
+    }).formatToParts(toDate);
+
+    const day = parts.find(p => p.type === 'day')?.value || '';
+    const month = parts.find(p => p.type === 'month')?.value || '';
+    const year = parts.find(p => p.type === 'year')?.value || '';
+
+    if (!day || !month || !year) return 'N/A';
+
+    return `${day}-${month}-${year}`; // e.g., 29-Sep-2025
   } catch (error) {
     console.error('Error formatting date:', error);
     return String(date);

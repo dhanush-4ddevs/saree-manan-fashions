@@ -793,7 +793,7 @@ export default function AdminReceiveVoucher() {
                         <td className="border p-2">{highlightSearchTerm(voucher.voucher_no, searchTerm)}</td>
                         <td className="border p-2">{formatDate(voucher.created_at)}</td>
                         <td className="border p-2">{highlightSearchTerm(voucher.item_details?.item_name || '', searchTerm)}</td>
-                        <td className="border p-2">{event.details.transport?.lr_date || '-'}</td>
+                        <td className="border p-2">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : '-'}</td>
                         <td className="border p-2">{event.details.transport?.lr_no || '-'}</td>
                         <td className="border p-2">{senderId ? (senderNames[senderId] ?? 'Loading...') : '-'}</td>
                         <td className="border p-2">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</td>
@@ -873,7 +873,7 @@ export default function AdminReceiveVoucher() {
                         </div>
                         <div>
                           <div className="text-gray-500">LR Date</div>
-                          <div className="font-medium">{event.details.transport?.lr_date || '-'}</div>
+                          <div className="font-medium">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : '-'}</div>
                         </div>
                         <div>
                           <div className="text-gray-500">Sent Qty</div>
@@ -952,7 +952,7 @@ export default function AdminReceiveVoucher() {
                             <td className="border p-2">{voucher.voucher_no}</td>
                             <td className="border p-2">{formatDate(voucher.created_at)}</td>
                             <td className="border p-2">{voucher.item_details?.item_name || ''}</td>
-                            <td className="border p-2">{event.details.transport?.lr_date || '-'}</td>
+                            <td className="border p-2">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : '-'}</td>
                             <td className="border p-2">{event.details.transport?.lr_no || '-'}</td>
                             <td className="border p-2">{senderId ? (senderNames[senderId] ?? 'Loading...') : '-'}</td>
                             <td className="border p-2">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</td>
@@ -1026,7 +1026,7 @@ export default function AdminReceiveVoucher() {
                           </div>
                           <div>
                             <div className="text-gray-500">LR Date</div>
-                            <div className="font-medium">{event.details.transport?.lr_date || '-'}</div>
+                            <div className="font-medium">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : '-'}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">Received Qty</div>
@@ -1108,7 +1108,7 @@ export default function AdminReceiveVoucher() {
                 </div>
                 <div>
                   <label className="font-semibold">LR Date:</label>
-                  <p>{selectedEvent.details.transport?.lr_date || '-'}</p>
+                  <p>{selectedEvent.details.transport?.lr_date ? formatDate(selectedEvent.details.transport.lr_date) : '-'}</p>
                 </div>
                 <div>
                   <label className="font-semibold">Transport:</label>
