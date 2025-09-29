@@ -596,28 +596,28 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                       : action.details.quantity_received}</span>
                                   </div>
                                 )}
-                                {action.details.quantity_forwarded && (
+                                {action.details?.quantity_forwarded && action.details.quantity_forwarded > 0 && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <ArrowRight className="h-3 w-3 mr-2 text-orange-500" />
                                     <span className="font-medium">Forwarded: {(action.details.quantity_forwarded)}</span>
                                   </div>
                                 )}
-                                {action.details.discrepancies?.damaged_on_arrival && action.details.discrepancies.damaged_on_arrival > 0 && (
+                                {(action.details.discrepancies?.damaged_on_arrival ?? 0) > 0 && (
                                   <div className="flex items-center text-xs text-red-600">
                                     <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Damaged on arrival: {action.details.discrepancies.damaged_on_arrival}</span>
+                                    <span className="font-medium">Damaged on arrival: {action.details.discrepancies?.damaged_on_arrival}</span>
                                   </div>
                                 )}
-                                {action.details.discrepancies?.missing && action.details.discrepancies.missing > 0 && (
+                                {(action.details.discrepancies?.missing ?? 0) > 0 && (
                                   <div className="flex items-center text-xs text-yellow-600">
                                     <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Missing on arrival: {action.details.discrepancies.missing}</span>
+                                    <span className="font-medium">Missing on arrival: {action.details.discrepancies?.missing}</span>
                                   </div>
                                 )}
-                                {action.details.discrepancies?.damaged_after_job && action.details.discrepancies.damaged_after_job > 0 && (
+                                {(action.details.discrepancies?.damaged_after_job ?? 0) > 0 && (
                                   <div className="flex items-center text-xs text-orange-600">
                                     <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Damage after job: {action.details.discrepancies.damaged_after_job}</span>
+                                    <span className="font-medium">Damage after job: {action.details.discrepancies?.damaged_after_job}</span>
                                   </div>
                                 )}
                               </div>
