@@ -106,7 +106,7 @@ export default function AdminReceiveVoucher() {
         const forwardEventsToAdmin = voucher.events.filter((event: VoucherEvent) =>
           event.event_type === 'forward' &&
           event.details &&
-          event.details.receiver_id === adminUid
+          event.details.receiver_id === 'admin'
         );
 
         forwardEventsToAdmin.forEach(event => {
