@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, ArrowRight, List, Grid3X3 } from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, List, Grid3X3 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { db } from '../../lib/firebase';
 import { collection, query, where, getDocs, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { getCurrentUser } from '../../config/firebase';
@@ -71,12 +71,8 @@ export default function ReceiveReport() {
   const [sortedAlreadyReceivedVouchers, setSortedAlreadyReceivedVouchers] = useState<ReceiveItem[]>([]);
   const [filteredAlreadyReceivedVouchers, setFilteredAlreadyReceivedVouchers] = useState<ReceiveItem[]>([]);
 
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const highlightedVoucherId = searchParams?.get('voucherId');
-  const highlightOnly = searchParams?.get('highlightOnly') === 'true';
   const sortMenuRef = useRef<HTMLDivElement>(null);
-  const highlightedVoucherRef = useRef<HTMLTableRowElement>(null);
 
   const fetchVouchersForUser = async () => {
     try {
@@ -449,41 +445,6 @@ export default function ReceiveReport() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSortMenu]);
 
-  useEffect(() => {
-    if (highlightedVoucherId) {
-      const itemToHighlight = vouchers.find(v => v.voucherId === highlightedVoucherId);
-      if (itemToHighlight) {
-        // Only set editing mode if highlightOnly is false
-        if (!highlightOnly) {
-          setEditingVoucherId(itemToHighlight.id);
-        }
-
-        // Scroll to the highlighted voucher after a short delay to ensure DOM is updated
-        setTimeout(() => {
-          if (highlightedVoucherRef.current) {
-            highlightedVoucherRef.current.scrollIntoView({
-              behavior: 'smooth',
-              block: 'center',
-              inline: 'nearest'
-            });
-          }
-
-          // Clear the URL parameters immediately after scroll starts
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('voucherId');
-          newUrl.searchParams.delete('highlightOnly');
-          router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-        }, 100);
-      } else {
-        // If voucher not found, still clear the URL parameters
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('voucherId');
-        newUrl.searchParams.delete('highlightOnly');
-        router.replace(newUrl.pathname + newUrl.search, { scroll: false });
-      }
-    }
-  }, [highlightedVoucherId, vouchers, router, highlightOnly]);
-
   const handleEdit = (id: string) => {
     const item = vouchers.find(v => v.id === id) || alreadyReceivedVouchers.find(v => v.id === id);
     if (item) {
@@ -623,22 +584,20 @@ export default function ReceiveReport() {
         <div className="flex items-center rounded-lg p-1 bg-white bg-opacity-20">
           <button
             onClick={() => setViewMode('table')}
-            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
-              viewMode === 'table'
+            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${viewMode === 'table'
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-white hover:bg-white hover:bg-opacity-20'
-            }`}
+              }`}
           >
             <List className="h-4 w-4 mr-1" />
             Table View
           </button>
           <button
             onClick={() => setViewMode('card')}
-            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
-              viewMode === 'card'
+            className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${viewMode === 'card'
                 ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-white hover:bg-white hover:bg-opacity-20'
-            }`}
+              }`}
           >
             <Grid3X3 className="h-4 w-4 mr-1" />
             Card View
@@ -749,126 +708,119 @@ export default function ReceiveReport() {
                 </div>
               </div>
 
-            {/* Main tables (pending/received) */}
-            {/* To Be Received Table */}
-            <div className="relative border border-blue-200 overflow-auto max-h-[70vh] pl-0">
-              <table className="min-w-full bg-white">
-                <thead className="bg-blue-50 sticky top-0 z-10">
-                  <tr>
-                    {["SN", "Photo", "Voucher No", "Voucher Dt", "Item", "Job Work", "Vendor Code", "LR Date", "LR No", "Transport", "Sender", "Expected Qty", "Missing", "Damaged", "Net Received Qty", "Damage Reason", "Comment", "Action"].map(header => (
-                      <th key={header} className="border border-blue-200 p-2 text-blue-700 bg-blue-50">{header}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredVouchers.length === 0 ? (
+              {/* Main tables (pending/received) */}
+              {/* To Be Received Table */}
+              <div className="relative border border-blue-200 overflow-auto max-h-[70vh] pl-0">
+                <table className="min-w-full bg-white">
+                  <thead className="bg-blue-50 sticky top-0 z-10">
                     <tr>
-                      <td colSpan={19} className="text-center text-gray-500 py-4">
-                        No vouchers to receive.
-                      </td>
+                      {["SN", "Photo", "Voucher No", "Voucher Dt", "Item", "Job Work", "Vendor Code", "LR Date", "LR No", "Transport", "Sender", "Expected Qty", "Missing", "Damaged", "Net Received Qty", "Damage Reason", "Comment", "Action"].map(header => (
+                        <th key={header} className="border border-blue-200 p-2 text-blue-700 bg-blue-50">{header}</th>
+                      ))}
                     </tr>
-                  ) : (
-                    filteredVouchers.map((item, index) => {
-                      const isEditing = editingVoucherId === item.id;
-                      const isHighlighted = highlightedVoucherId === item.voucherId;
-                      const currentData = formData[item.id] || {};
-                      const missingQty = isEditing ? (Number(currentData.missing) || 0) : item.missing;
-                      const receivedQty = item.quantityExpected - missingQty;
-                      const damagedQty = isEditing ? (Number(currentData.damagedOnArrival) || 0) : item.damagedOnArrival;
-                      const netQty = receivedQty - damagedQty;
-                      return (
-                        <tr
-                          key={item.id}
-                          ref={isHighlighted ? highlightedVoucherRef : null}
-                          className={`${isEditing ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-blue-50')} ${isHighlighted ? 'ring-2 ring-blue-500 ring-opacity-50' : ''} relative`}
-                        >
-                          <td className="border p-2 relative">
-                            {isHighlighted && (
-                              <div className="absolute -left-6 top-1/2 transform -translate-y-1/2 z-20">
-                                <ArrowRight className="h-6 w-6 text-blue-600 animate-pulse drop-shadow-lg" />
-                              </div>
-                            )}
-                            {index + 1}
-                          </td>
-                          <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
-                          <td className="border p-2">{highlightSearchTerm(item.voucherNo, searchTerm)}</td>
-                          <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          }) : 'N/A'}</td>
-                          <td className="border p-2">{highlightSearchTerm(item.item, searchTerm)}</td>
-                          <td className="border p-2">{highlightSearchTerm(item.jobWork, searchTerm)}</td>
-                          <td className="border p-2">{item.vendorCode}</td>
-                          <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          }) : 'N/A'}</td>
-                          <td className="border p-2">{item.lrNumber || 'N/A'}</td>
-                          <td className="border p-2">{item.transportName || 'N/A'}</td>
-                          <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>
-                          <td className="border p-2">{item.quantityExpected}</td>
-                          <td className={`border p-2 ${missingQty > 0 ? 'text-red-600 font-bold' : ''}`}>
-                            {isEditing ? (
-                              <input type="number" min="0" max={item.quantityExpected} value={currentData.missing ?? item.missing ?? 0} onChange={e => handleInputChange(item.id, 'missing', e.target.value)} className="w-20 p-1 border rounded" />
-                            ) : (
-                              missingQty
-                            )}
-                          </td>
-                          <td className="border p-2">
-                            {isEditing ? (
-                              <input type="number" value={currentData.damagedOnArrival} onChange={e => handleInputChange(item.id, 'damagedOnArrival', e.target.value)} className="w-20 p-1 border rounded" />
-                            ) : (
-                              damagedQty
-                            )}
-                          </td>
-                          <td className="border p-2 font-semibold">{netQty}</td>
-                          <td className="border p-2">
-                            {isEditing ? (
-                              <textarea value={currentData.damageReason} onChange={e => handleInputChange(item.id, 'damageReason', e.target.value)} className="w-full p-1 border rounded" />
-                            ) : (
-                              item.damageReason
-                            )}
-                          </td>
-                          <td className="border p-2">
-                            {isEditing ? (
-                              <textarea value={currentData.receiverComment} onChange={e => handleInputChange(item.id, 'receiverComment', e.target.value)} className="w-full p-1 border rounded" />
-                            ) : (
-                              item.receiverComment
-                            )}
-                          </td>
-                          <td className="border p-2">
-                            {isEditing ? (
-                              <div className="flex gap-2">
-                                <button onClick={() => handleSave(item.id)} disabled={saving} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 disabled:bg-gray-400">
-                                  <Save className="h-4 w-4" />
+                  </thead>
+                  <tbody>
+                    {filteredVouchers.length === 0 ? (
+                      <tr>
+                        <td colSpan={19} className="text-center text-gray-500 py-4">
+                          No vouchers to receive.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredVouchers.map((item, index) => {
+                        const isEditing = editingVoucherId === item.id;
+                        const currentData = formData[item.id] || {};
+                        const missingQty = isEditing ? (Number(currentData.missing) || 0) : item.missing;
+                        const receivedQty = item.quantityExpected - missingQty;
+                        const damagedQty = isEditing ? (Number(currentData.damagedOnArrival) || 0) : item.damagedOnArrival;
+                        const netQty = receivedQty - damagedQty;
+                        return (
+                          <tr
+                            key={item.id}
+                            className={`${isEditing ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-blue-50')} relative`}
+                          >
+                            <td className="border p-2 relative">
+                              {index + 1}
+                            </td>
+                            <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
+                            <td className="border p-2">{highlightSearchTerm(item.voucherNo, searchTerm)}</td>
+                            <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : 'N/A'}</td>
+                            <td className="border p-2">{highlightSearchTerm(item.item, searchTerm)}</td>
+                            <td className="border p-2">{highlightSearchTerm(item.jobWork, searchTerm)}</td>
+                            <td className="border p-2">{item.vendorCode}</td>
+                            <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : 'N/A'}</td>
+                            <td className="border p-2">{item.lrNumber || 'N/A'}</td>
+                            <td className="border p-2">{item.transportName || 'N/A'}</td>
+                            <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>
+                            <td className="border p-2">{item.quantityExpected}</td>
+                            <td className={`border p-2 ${missingQty > 0 ? 'text-red-600 font-bold' : ''}`}>
+                              {isEditing ? (
+                                <input type="number" min="0" max={item.quantityExpected} value={currentData.missing ?? item.missing ?? 0} onChange={e => handleInputChange(item.id, 'missing', e.target.value)} className="w-20 p-1 border rounded" />
+                              ) : (
+                                missingQty
+                              )}
+                            </td>
+                            <td className="border p-2">
+                              {isEditing ? (
+                                <input type="number" value={currentData.damagedOnArrival} onChange={e => handleInputChange(item.id, 'damagedOnArrival', e.target.value)} className="w-20 p-1 border rounded" />
+                              ) : (
+                                damagedQty
+                              )}
+                            </td>
+                            <td className="border p-2 font-semibold">{netQty}</td>
+                            <td className="border p-2">
+                              {isEditing ? (
+                                <textarea value={currentData.damageReason} onChange={e => handleInputChange(item.id, 'damageReason', e.target.value)} className="w-full p-1 border rounded" />
+                              ) : (
+                                item.damageReason
+                              )}
+                            </td>
+                            <td className="border p-2">
+                              {isEditing ? (
+                                <textarea value={currentData.receiverComment} onChange={e => handleInputChange(item.id, 'receiverComment', e.target.value)} className="w-full p-1 border rounded" />
+                              ) : (
+                                item.receiverComment
+                              )}
+                            </td>
+                            <td className="border p-2">
+                              {isEditing ? (
+                                <div className="flex gap-2">
+                                  <button onClick={() => handleSave(item.id)} disabled={saving} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 disabled:bg-gray-400">
+                                    <Save className="h-4 w-4" />
+                                  </button>
+                                  <button onClick={() => handleCancel(item.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button onClick={() => handleEdit(item.id)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                  Receive
                                 </button>
-                                <button onClick={() => handleCancel(item.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                  <X className="h-4 w-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <button onClick={() => handleEdit(item.id)} className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-                                Receive
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                  <tr className="bg-blue-50 font-bold">
-                    <td colSpan={11} className="border p-2 text-right">TOTAL</td>
-                    <td className="border p-2">{totals.quantityExpected}</td>
-                    <td className={`border p-2 ${totals.quantityExpected - totals.quantityReceived > 0 ? 'text-red-600 font-bold' : ''}`}>{totals.quantityExpected - totals.quantityReceived}</td>
-                    <td className="border p-2">{totals.damagedOnArrival}</td>
-                    <td className="border p-2 font-semibold">{totals.quantityReceived - totals.damagedOnArrival}</td>
-                    <td colSpan={3} className="border p-2"></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                    <tr className="bg-blue-50 font-bold">
+                      <td colSpan={11} className="border p-2 text-right">TOTAL</td>
+                      <td className="border p-2">{totals.quantityExpected}</td>
+                      <td className={`border p-2 ${totals.quantityExpected - totals.quantityReceived > 0 ? 'text-red-600 font-bold' : ''}`}>{totals.quantityExpected - totals.quantityReceived}</td>
+                      <td className="border p-2">{totals.damagedOnArrival}</td>
+                      <td className="border p-2 font-semibold">{totals.quantityReceived - totals.damagedOnArrival}</td>
+                      <td colSpan={3} className="border p-2"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
             </div>
           )}
@@ -886,22 +838,20 @@ export default function ReceiveReport() {
                 <div className="flex items-center rounded-lg p-1 bg-white bg-opacity-20">
                   <button
                     onClick={() => setAlreadyReceivedViewMode('table')}
-                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
-                      alreadyReceivedViewMode === 'table'
+                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${alreadyReceivedViewMode === 'table'
                         ? 'bg-white text-green-700 shadow-sm'
                         : 'text-white hover:bg-white hover:bg-opacity-20'
-                    }`}
+                      }`}
                   >
                     <List className="h-4 w-4 mr-1" />
                     Table View
                   </button>
                   <button
                     onClick={() => setAlreadyReceivedViewMode('card')}
-                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${
-                      alreadyReceivedViewMode === 'card'
+                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${alreadyReceivedViewMode === 'card'
                         ? 'bg-white text-green-700 shadow-sm'
                         : 'text-white hover:bg-white hover:bg-opacity-20'
-                    }`}
+                      }`}
                   >
                     <Grid3X3 className="h-4 w-4 mr-1" />
                     Card View
@@ -1026,244 +976,237 @@ export default function ReceiveReport() {
 
                   <div className="relative border border-green-200 rounded-lg overflow-auto max-h-[70vh] pl-8">
                     <table className="min-w-full bg-white">
-                    <thead className="bg-green-50 sticky top-0 z-10">
-                      <tr>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">SN</th>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">Photo</th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('voucherNo')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Voucher No
-                            {alreadyReceivedSortField === 'voucherNo' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('voucherDate')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Voucher Dt
-                            {alreadyReceivedSortField === 'voucherDate' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('item')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Item
-                            {alreadyReceivedSortField === 'item' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('jobWork')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Job Work
-                            {alreadyReceivedSortField === 'jobWork' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('vendorCode')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Vendor Code
-                            {alreadyReceivedSortField === 'vendorCode' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('lrDate')}
-                        >
-                          <div className="flex items-center justify-between">
-                            LR Date
-                            {alreadyReceivedSortField === 'lrDate' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('lrNumber')}
-                        >
-                          <div className="flex items-center justify-between">
-                            LR No
-                            {alreadyReceivedSortField === 'lrNumber' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('transportName')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Transport
-                            {alreadyReceivedSortField === 'transportName' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('senderName')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Sender
-                            {alreadyReceivedSortField === 'senderName' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('quantityExpected')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Expected Qty
-                            {alreadyReceivedSortField === 'quantityExpected' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('missing')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Missing
-                            {alreadyReceivedSortField === 'missing' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th
-                          className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
-                          onClick={() => handleAlreadyReceivedSort('damagedOnArrival')}
-                        >
-                          <div className="flex items-center justify-between">
-                            Damaged
-                            {alreadyReceivedSortField === 'damagedOnArrival' && (
-                              alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
-                            )}
-                          </div>
-                        </th>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">Net Received Qty</th>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">Damage Reason</th>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">Comment</th>
-                        <th className="border border-green-200 p-2 text-green-700 bg-green-50">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAlreadyReceivedVouchers.map((item, index) => {
-                        const isEditing = editingVoucherId === item.id;
-                        const isHighlighted = highlightedVoucherId === item.voucherId;
-                        const currentData = formData[item.id] || {};
-                        const missingQty = isEditing ? (Number(currentData.missing) || 0) : item.missing;
-                        const receivedQty = item.quantityExpected - missingQty;
-                        const damagedQty = isEditing ? (Number(currentData.damagedOnArrival) || 0) : item.damagedOnArrival;
-                        const netQty = receivedQty - damagedQty;
-                        return (
-                          <tr
-                            key={item.id}
-                            ref={isHighlighted ? highlightedVoucherRef : null}
-                            className={`${isEditing ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-green-50')} ${isHighlighted ? 'ring-2 ring-green-500 ring-opacity-50' : ''} relative`}
+                      <thead className="bg-green-50 sticky top-0 z-10">
+                        <tr>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">SN</th>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">Photo</th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('voucherNo')}
                           >
-                            <td className="border p-2 relative">
-                              {isHighlighted && (
-                                <div className="absolute -left-6 top-1/2 transform -translate-y-1/2 z-20">
-                                  <ArrowRight className="h-6 w-6 text-green-600 animate-pulse drop-shadow-lg" />
-                                </div>
+                            <div className="flex items-center justify-between">
+                              Voucher No
+                              {alreadyReceivedSortField === 'voucherNo' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
                               )}
-                              {index + 1}
-                            </td>
-                            <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
-                            <td className="border p-2">{item.voucherNo}</td>
-                            <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            }) : 'N/A'}</td>
-                            <td className="border p-2">{item.item}</td>
-                            <td className="border p-2">{item.jobWork}</td>
-                            <td className="border p-2">{item.vendorCode}</td>
-                            <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            }) : 'N/A'}</td>
-                            <td className="border p-2">{item.lrNumber || 'N/A'}</td>
-                            <td className="border p-2">{item.transportName || 'N/A'}</td>
-                            <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>
-                            <td className="border p-2">{item.quantityExpected}</td>
-                            <td className={`border p-2 ${missingQty > 0 ? 'text-red-600 font-bold' : ''}`}>
-                              {isEditing ? (
-                                <input type="number" min="0" max={item.quantityExpected} value={currentData.missing ?? item.missing ?? 0} onChange={e => handleInputChange(item.id, 'missing', e.target.value)} className="w-20 p-1 border rounded" />
-                              ) : (
-                                missingQty
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('voucherDate')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Voucher Dt
+                              {alreadyReceivedSortField === 'voucherDate' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
                               )}
-                            </td>
-                            <td className="border p-2">
-                              {isEditing ? (
-                                <input type="number" value={currentData.damagedOnArrival} onChange={e => handleInputChange(item.id, 'damagedOnArrival', e.target.value)} className="w-20 p-1 border rounded" />
-                              ) : (
-                                damagedQty
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('item')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Item
+                              {alreadyReceivedSortField === 'item' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
                               )}
-                            </td>
-                            <td className="border p-2 font-semibold">{netQty}</td>
-                            <td className="border p-2">
-                              {isEditing ? (
-                                <textarea value={currentData.damageReason} onChange={e => handleInputChange(item.id, 'damageReason', e.target.value)} className="w-full p-1 border rounded" />
-                              ) : (
-                                item.damageReason
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('jobWork')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Job Work
+                              {alreadyReceivedSortField === 'jobWork' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
                               )}
-                            </td>
-                            <td className="border p-2">
-                              {isEditing ? (
-                                <textarea value={currentData.receiverComment} onChange={e => handleInputChange(item.id, 'receiverComment', e.target.value)} className="w-full p-1 border rounded" />
-                              ) : (
-                                item.receiverComment
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('vendorCode')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Vendor Code
+                              {alreadyReceivedSortField === 'vendorCode' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
                               )}
-                            </td>
-                            <td className="border p-2">
-                              {isEditing ? (
-                                <div className="flex gap-2">
-                                  <button onClick={() => handleSave(item.id)} disabled={saving} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 disabled:bg-gray-400">
-                                    <Save className="h-4 w-4" />
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('lrDate')}
+                          >
+                            <div className="flex items-center justify-between">
+                              LR Date
+                              {alreadyReceivedSortField === 'lrDate' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('lrNumber')}
+                          >
+                            <div className="flex items-center justify-between">
+                              LR No
+                              {alreadyReceivedSortField === 'lrNumber' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('transportName')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Transport
+                              {alreadyReceivedSortField === 'transportName' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('senderName')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Sender
+                              {alreadyReceivedSortField === 'senderName' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('quantityExpected')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Expected Qty
+                              {alreadyReceivedSortField === 'quantityExpected' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('missing')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Missing
+                              {alreadyReceivedSortField === 'missing' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th
+                            className="border border-green-200 p-2 text-green-700 bg-green-50 cursor-pointer hover:bg-green-100"
+                            onClick={() => handleAlreadyReceivedSort('damagedOnArrival')}
+                          >
+                            <div className="flex items-center justify-between">
+                              Damaged
+                              {alreadyReceivedSortField === 'damagedOnArrival' && (
+                                alreadyReceivedSortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />
+                              )}
+                            </div>
+                          </th>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">Net Received Qty</th>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">Damage Reason</th>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">Comment</th>
+                          <th className="border border-green-200 p-2 text-green-700 bg-green-50">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredAlreadyReceivedVouchers.map((item, index) => {
+                          const isEditing = editingVoucherId === item.id;
+                          const currentData = formData[item.id] || {};
+                          const missingQty = isEditing ? (Number(currentData.missing) || 0) : item.missing;
+                          const receivedQty = item.quantityExpected - missingQty;
+                          const damagedQty = isEditing ? (Number(currentData.damagedOnArrival) || 0) : item.damagedOnArrival;
+                          const netQty = receivedQty - damagedQty;
+                          return (
+                            <tr
+                              key={item.id}
+                              className={`${isEditing ? 'bg-yellow-50' : (index % 2 === 0 ? 'bg-white' : 'bg-green-50')} relative`}
+                            >
+                              <td className="border p-2 relative">
+                                {index + 1}
+                              </td>
+                              <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
+                              <td className="border p-2">{item.voucherNo}</td>
+                              <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              }) : 'N/A'}</td>
+                              <td className="border p-2">{item.item}</td>
+                              <td className="border p-2">{item.jobWork}</td>
+                              <td className="border p-2">{item.vendorCode}</td>
+                              <td className="border p-2">{item.lrDate ? new Date(item.lrDate).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric'
+                              }) : 'N/A'}</td>
+                              <td className="border p-2">{item.lrNumber || 'N/A'}</td>
+                              <td className="border p-2">{item.transportName || 'N/A'}</td>
+                              <td className="border p-2">{`${item.senderName} (${item.senderType})`}</td>
+                              <td className="border p-2">{item.quantityExpected}</td>
+                              <td className={`border p-2 ${missingQty > 0 ? 'text-red-600 font-bold' : ''}`}>
+                                {isEditing ? (
+                                  <input type="number" min="0" max={item.quantityExpected} value={currentData.missing ?? item.missing ?? 0} onChange={e => handleInputChange(item.id, 'missing', e.target.value)} className="w-20 p-1 border rounded" />
+                                ) : (
+                                  missingQty
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <input type="number" value={currentData.damagedOnArrival} onChange={e => handleInputChange(item.id, 'damagedOnArrival', e.target.value)} className="w-20 p-1 border rounded" />
+                                ) : (
+                                  damagedQty
+                                )}
+                              </td>
+                              <td className="border p-2 font-semibold">{netQty}</td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <textarea value={currentData.damageReason} onChange={e => handleInputChange(item.id, 'damageReason', e.target.value)} className="w-full p-1 border rounded" />
+                                ) : (
+                                  item.damageReason
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <textarea value={currentData.receiverComment} onChange={e => handleInputChange(item.id, 'receiverComment', e.target.value)} className="w-full p-1 border rounded" />
+                                ) : (
+                                  item.receiverComment
+                                )}
+                              </td>
+                              <td className="border p-2">
+                                {isEditing ? (
+                                  <div className="flex gap-2">
+                                    <button onClick={() => handleSave(item.id)} disabled={saving} className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 disabled:bg-gray-400">
+                                      <Save className="h-4 w-4" />
+                                    </button>
+                                    <button onClick={() => handleCancel(item.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleEdit(item.id)}
+                                    disabled={item.isForwarded}
+                                    className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                    title={item.isForwarded ? "Cannot edit: this voucher has been forwarded." : "Edit Received Voucher"}
+                                  >
+                                    Edit
                                   </button>
-                                  <button onClick={() => handleCancel(item.id)} className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
-                                    <X className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleEdit(item.id)}
-                                  disabled={item.isForwarded}
-                                  className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                                  title={item.isForwarded ? "Cannot edit: this voucher has been forwarded." : "Edit Received Voucher"}
-                                >
-                                  Edit
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
                     </table>
                   </div>
                 </div>

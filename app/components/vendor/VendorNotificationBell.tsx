@@ -115,21 +115,8 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
         // Set the active tab to 'account'
         window.localStorage.setItem('activeProfileTab', 'account');
       } else if (notification.type === 'voucher_assignment' || notification.type === 'voucher_completion') {
-        // Redirect to Receive Report with specific voucher highlighted
-        if (notification.voucherId) {
-          // For voucher completion, add a flag to indicate it should only highlight, not edit
-          const urlParams = new URLSearchParams({
-            voucherId: notification.voucherId
-          });
-
-          if (notification.type === 'voucher_completion') {
-            urlParams.append('highlightOnly', 'true');
-          }
-
-          router.push(`/vendor/receive-report?${urlParams.toString()}`);
-        } else {
-          router.push('/vendor/receive-report');
-        }
+        // Redirect to Receive Report - simple navigation without parameters
+        router.push('/vendor/receive-report');
       }
 
       setIsOpen(false);

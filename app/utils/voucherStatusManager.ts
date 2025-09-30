@@ -85,9 +85,20 @@ export function calculateVoucherTotals(voucher: Voucher): {
     .filter(e => e.event_type === 'forward')
     .reduce((sum, e) => sum + (e.details.discrepancies?.damaged_after_job || 0), 0);
 
-  // Calculate admin received quantity (receive events where receiver is admin)
+  // Calculate admin received quantity (receive events where parent forward was sent to 'admin')
   const admin_received_quantity = events
-    .filter(e => e.event_type === 'receive' && e.details.receiver_id === voucher.created_by_user_id)
+    .filter(e => {
+      if (e.event_type !== 'receive') return false;
+      
+      // Check if this receive event's parent forward was sent to generic 'admin'
+      if (e.parent_event_id) {
+        const parentForward = events.find(fwd => fwd.event_id === e.parent_event_id);
+        return parentForward && parentForward.details.receiver_id === 'admin';
+      }
+      
+      // Also check if receiver_id is 'admin' directly (backwards compatibility)
+      return e.details.receiver_id === 'admin' || e.details.receiver_id === voucher.created_by_user_id;
+    })
     .reduce((sum, e) => sum + (e.details.quantity_received || 0), 0);
 
   return {

@@ -16,7 +16,11 @@ import {
   Clock,
   CheckCircle2,
   Grid3X3,
-  History
+  History,
+  TrendingUp,
+  XCircle,
+  HelpCircle,
+  Archive
 } from 'lucide-react';
 import { Voucher, VoucherEvent, calculateTotalQuantityReceived, calculateTotalQuantityForwarded, calculateTotalDamage, getCurrentAvailableQuantity, getSortedVoucherEvents } from '../../types/voucher';
 import { db } from '../../config/firebase';
@@ -24,6 +28,14 @@ import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import React from 'react';
 import { PrintPreviewModal } from './PrintPreviewModal';
 import { Printer } from 'lucide-react';
+
+interface VoucherStatistics {
+  initialQuantity: number;
+  damagedOnArrival: number;
+  damagedAfterJob: number;
+  totalMissing: number;
+  adminReceivedQuantity: number;
+}
 
 interface VoucherWorkflowTrackerProps {
   voucherId?: string;
@@ -63,6 +75,13 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
   const [viewMode, setViewMode] = useState<ViewMode>('chronological');
   const [userNames, setUserNames] = useState<{ [uid: string]: string }>({});
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [statistics, setStatistics] = useState<VoucherStatistics>({
+    initialQuantity: 0,
+    damagedOnArrival: 0,
+    damagedAfterJob: 0,
+    totalMissing: 0,
+    adminReceivedQuantity: 0
+  });
 
   // Helper to fetch user display name from Firestore
   const fetchUserName = async (uid: string) => {
@@ -149,6 +168,33 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
     return () => unsubscribe();
   }, [voucherId]);
 
+  // Calculate statistics for the current voucher
+  useEffect(() => {
+    if (!voucher) {
+      setStatistics({
+        initialQuantity: 0,
+        damagedOnArrival: 0,
+        damagedAfterJob: 0,
+        totalMissing: 0,
+        adminReceivedQuantity: 0
+      });
+      return;
+    }
+
+    // Use direct fields from voucher object for accurate totals
+    const totalDamagedOnArrival = voucher.total_damaged_on_arrival || 0;
+    const totalDamagedAfterWork = voucher.total_damaged_after_work || 0;
+    const totalMissingOnArrival = voucher.total_missing_on_arrival || 0;
+
+    setStatistics({
+      initialQuantity: voucher.item_details?.initial_quantity || 0,
+      damagedOnArrival: totalDamagedOnArrival,
+      damagedAfterJob: totalDamagedAfterWork,
+      totalMissing: totalMissingOnArrival,
+      adminReceivedQuantity: voucher.admin_received_quantity || 0
+    });
+  }, [voucher]);
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg shadow p-6 flex justify-center items-center">
@@ -174,15 +220,45 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
   // Add completion step if voucher is completed
   const allEvents = [...events];
   if (voucher.voucher_status?.toLowerCase() === 'completed') {
+    // Find receive events that are receiving vouchers forwarded to 'admin'
+    // We need to find receive events whose parent forward event had receiver_id: 'admin'
+    const adminReceiveEvents = events.filter((event: VoucherEvent) => {
+      if (event.event_type !== 'receive') return false;
+
+      // Find the parent forward event
+      if (event.parent_event_id) {
+        const parentForwardEvent = events.find(e => e.event_id === event.parent_event_id);
+        // Check if the parent forward was sent to generic 'admin'
+        if (parentForwardEvent && parentForwardEvent.details.receiver_id === 'admin') {
+          return true;
+        }
+      }
+
+      // Also check if receiver_id in the receive event itself is 'admin' (backwards compatibility)
+      if (event.details.receiver_id === 'admin') {
+        return true;
+      }
+
+      return false;
+    });
+
+    // Get the user_id of the admin who actually received the voucher (from the most recent admin receive event)
+    const lastAdminReceiveEvent = adminReceiveEvents.length > 0
+      ? adminReceiveEvents[adminReceiveEvents.length - 1]
+      : null;
+
+    const adminWhoReceived = lastAdminReceiveEvent?.user_id || voucher.updatedBy || voucher.created_by_user_id;
+
     // Create a completion event
     const completionEvent: any = {
       event_id: 'completion-step',
       event_type: 'completed',
       timestamp: voucher.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-      user_id: voucher.created_by_user_id,
+      user_id: adminWhoReceived,
       comment: 'Voucher completed and returned to admin',
       details: {
         quantity_received: voucher.admin_received_quantity || 0,
+        receiver_id: adminWhoReceived,
         jobWork: undefined
       }
     };
@@ -245,6 +321,85 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
             <Printer className="h-4 w-4 mr-1" />
             Print Preview
           </button>
+        </div>
+      </div>
+
+      {/* Statistics Section */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+          <TrendingUp className="h-4 w-4 mr-2" />
+          Voucher Statistics
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {/* Initial Quantity */}
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Initial Quantity</p>
+                <p className="text-2xl font-bold text-blue-600">{statistics.initialQuantity}</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Package className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Items created</p>
+          </div>
+
+          {/* Damaged on Arrival */}
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Damaged on Arrival</p>
+                <p className="text-2xl font-bold text-red-600">{statistics.damagedOnArrival}</p>
+              </div>
+              <div className="p-3 bg-red-100 rounded-full">
+                <XCircle className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">During transit</p>
+          </div>
+
+          {/* Damaged After Job */}
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Damaged After Job</p>
+                <p className="text-2xl font-bold text-orange-600">{statistics.damagedAfterJob}</p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-full">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Post job work damage</p>
+          </div>
+
+          {/* Total Missing */}
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Total Missing</p>
+                <p className="text-2xl font-bold text-yellow-600">{statistics.totalMissing}</p>
+              </div>
+              <div className="p-3 bg-yellow-100 rounded-full">
+                <HelpCircle className="h-6 w-6 text-yellow-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Items missing</p>
+          </div>
+
+          {/* Admin Received */}
+          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 font-medium mb-1">Admin Received</p>
+                <p className="text-2xl font-bold text-green-600">{statistics.adminReceivedQuantity}</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-full">
+                <Archive className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Items received back</p>
+          </div>
         </div>
       </div>
 

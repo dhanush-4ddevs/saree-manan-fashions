@@ -96,7 +96,7 @@ export default function AdminReceiveVoucher() {
     fetchPendingVouchers();
   }, []);
 
-  // Fetch sender vendorJobWork and name/company for all visible rows
+  // Fetch sender vendorJobWork and name/company for all visible rows, and admin names who received vouchers
   useEffect(() => {
     const fetchJobWorks = async () => {
       const toFetch = new Set<string>();
@@ -112,6 +112,20 @@ export default function AdminReceiveVoucher() {
         forwardEventsToAdmin.forEach(event => {
           if (event.details.sender_id && (!senderJobWorks[event.details.sender_id] || !senderNames[event.details.sender_id])) {
             toFetch.add(event.details.sender_id);
+          }
+        });
+      });
+
+      // Collect admin user IDs from already received vouchers
+      alreadyReceived.forEach(voucher => {
+        voucher.events.forEach((event: VoucherEvent) => {
+          // Collect sender IDs from forward events
+          if (event.event_type === 'forward' && event.details.sender_id && !senderNames[event.details.sender_id]) {
+            toFetch.add(event.details.sender_id);
+          }
+          // Collect admin IDs from receive events
+          if (event.event_type === 'receive' && event.user_id && !senderNames[event.user_id]) {
+            toFetch.add(event.user_id);
           }
         });
       });
@@ -146,7 +160,7 @@ export default function AdminReceiveVoucher() {
     };
     fetchJobWorks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingVouchers, adminUid]);
+  }, [pendingVouchers, alreadyReceived, adminUid]);
 
   const handleForceRefresh = () => {
     setRefreshing(true);
@@ -793,12 +807,12 @@ export default function AdminReceiveVoucher() {
                         <td className="border p-2">{highlightSearchTerm(voucher.voucher_no, searchTerm)}</td>
                         <td className="border p-2">{formatDate(voucher.created_at)}</td>
                         <td className="border p-2">{highlightSearchTerm(voucher.item_details?.item_name || '', searchTerm)}</td>
-                        <td className="border p-2">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : '-'}</td>
-                        <td className="border p-2">{event.details.transport?.lr_no || '-'}</td>
+                        <td className="border p-2">{event.details.transport?.lr_date ? formatDate(event.details.transport.lr_date) : 'Not provided'}</td>
+                        <td className="border p-2">{event.details.transport?.lr_no || 'Not provided'}</td>
                         <td className="border p-2">{senderId ? (senderNames[senderId] ?? 'Loading...') : '-'}</td>
                         <td className="border p-2">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</td>
-                        <td className="border p-2">{event.details.quantity_forwarded || 'N/A'}</td>
-                        <td className="border p-2">{event.comment || '-'}</td>
+                        <td className="border p-2">{event.details.quantity_forwarded || 'Not provided'}</td>
+                        <td className="border p-2">{event.comment || 'Not provided'}</td>
                         <td className="border p-2">
                           <div className="flex gap-2">
                             <button
@@ -928,7 +942,7 @@ export default function AdminReceiveVoucher() {
                 <table className="min-w-full bg-white">
                   <thead className="bg-green-50 sticky top-0 z-10">
                     <tr>
-                      {['SN', 'Voucher No', 'Voucher Dt', 'Item', 'LR Date', 'LR No', 'Sender', 'Sender Job Work', 'Received Qty', 'Receive Date', 'Status', 'Action'].map(header => (
+                      {['SN', 'Voucher No', 'Voucher Dt', 'Item', 'LR Date', 'LR No', 'Sender', 'Sender Job Work', 'Received Qty', 'Receive Date', 'Received By', 'Status', 'Action'].map(header => (
                         <th key={header} className="border border-green-200 p-2 text-green-700 bg-green-50">{header}</th>
                       ))}
                     </tr>
@@ -940,9 +954,9 @@ export default function AdminReceiveVoucher() {
 
                       return receivedEvents.map((event, eventIndex) => {
                         const senderId = event.details.sender_id || '';
+                        // Find the receive event by ANY admin (not just current admin)
                         const receiveEvent = voucher.events.find((e: VoucherEvent) =>
                           e.event_type === 'receive' &&
-                          e.user_id === adminUid &&
                           e.parent_event_id === event.event_id
                         );
 
@@ -958,6 +972,7 @@ export default function AdminReceiveVoucher() {
                             <td className="border p-2">{senderId ? (senderJobWorks[senderId] ?? 'Loading...') : '-'}</td>
                             <td className="border p-2">{receiveEvent?.details.quantity_received || 'N/A'}</td>
                             <td className="border p-2">{formatDate(receiveEvent?.timestamp || '')}</td>
+                            <td className="border p-2">{receiveEvent?.user_id ? (senderNames[receiveEvent.user_id] ?? 'Loading...') : 'N/A'}</td>
                             <td className="border p-2">
                               <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
                                 Received
@@ -988,9 +1003,9 @@ export default function AdminReceiveVoucher() {
 
                   return receivedEvents.map((event) => {
                     const senderId = event.details.sender_id || '';
+                    // Find the receive event by ANY admin (not just current admin)
                     const receiveEvent = voucher.events.find((e: VoucherEvent) =>
                       e.event_type === 'receive' &&
-                      e.user_id === adminUid &&
                       e.parent_event_id === event.event_id
                     );
 
@@ -1022,7 +1037,7 @@ export default function AdminReceiveVoucher() {
                           </div>
                           <div>
                             <div className="text-gray-500">LR No</div>
-                            <div className="font-medium">{event.details.transport?.lr_no || '-'}</div>
+                            <div className="font-medium">{event.details.transport?.lr_no || 'Not provided'}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">LR Date</div>
@@ -1030,11 +1045,15 @@ export default function AdminReceiveVoucher() {
                           </div>
                           <div>
                             <div className="text-gray-500">Received Qty</div>
-                            <div className="font-medium">{receiveEvent?.details.quantity_received || 'N/A'}</div>
+                            <div className="font-medium">{receiveEvent?.details.quantity_received || 'Not provided'}</div>
                           </div>
                           <div>
                             <div className="text-gray-500">Receive Date</div>
                             <div className="font-medium">{formatDate(receiveEvent?.timestamp || '')}</div>
+                          </div>
+                          <div>
+                            <div className="text-gray-500">Received By</div>
+                            <div className="font-medium">{receiveEvent?.user_id ? (senderNames[receiveEvent.user_id] ?? 'Loading...') : 'N/A'}</div>
                           </div>
                         </div>
                         <div className="mt-3 flex gap-2">
@@ -1092,7 +1111,7 @@ export default function AdminReceiveVoucher() {
                 </div>
                 <div>
                   <label className="font-semibold">Job Work:</label>
-                  <p>{selectedEvent.details.jobWork}</p>
+                  <p>{selectedEvent?.details?.sender_id ? (senderJobWorks[selectedEvent.details.sender_id] ?? 'Loading...') : '-'}</p>
                 </div>
                 <div>
                   <label className="font-semibold">Quantity Forwarded:</label>
@@ -1104,7 +1123,7 @@ export default function AdminReceiveVoucher() {
                 </div>
                 <div>
                   <label className="font-semibold">LR Number:</label>
-                  <p>{selectedEvent.details.transport?.lr_no || '-'}</p>
+                  <p>{selectedEvent.details.transport?.lr_no || 'Not provided'}</p>
                 </div>
                 <div>
                   <label className="font-semibold">LR Date:</label>
@@ -1112,7 +1131,7 @@ export default function AdminReceiveVoucher() {
                 </div>
                 <div>
                   <label className="font-semibold">Transport:</label>
-                  <p>{selectedEvent.details.transport?.transporter_name || '-'}</p>
+                  <p>{selectedEvent.details.transport?.transporter_name || 'Not provided'}</p>
                 </div>
                 <div>
                   <label className="font-semibold">Comment:</label>
