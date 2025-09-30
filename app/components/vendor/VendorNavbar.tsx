@@ -198,7 +198,7 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
                 return (
                   <li key={item.name}>
                     <button
-                      onClick={() => handleMenuClick(item.path, item.action)}
+                      onClick={() => handleMenuClick(item.path)}
                       className={`flex items-center w-full px-4 py-2 rounded-md transition-colors ${pathname === item.path || pathname.startsWith(`${item.path}/`)
                         ? 'bg-blue-50 text-blue-600'
                         : 'text-blue-600 hover:bg-blue-50'
@@ -232,7 +232,7 @@ export default function VendorNavbar({ children }: { children: React.ReactNode }
               return (
                 <button
                   key={item.name}
-                  onClick={() => handleMenuClick(item.path, item.action)}
+                  onClick={() => handleMenuClick(item.path)}
                   aria-current={isActive ? 'page' : undefined}
                   className={`group relative flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive
                     ? 'text-blue-600 bg-blue-50 border-t-2 border-blue-600'
