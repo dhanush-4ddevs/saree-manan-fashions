@@ -95,9 +95,15 @@ export default function AdminPaymentComponent() {
     const payments: Record<string, number> = {};
     paymentsSnapshot.forEach(docSnap => {
       const d = docSnap.data();
-      // Key: voucherId_vendorId_jobWork
-      const key = `${d.voucherId}_${d.vendorId}_${d.jobWorkDone}`;
-      payments[key] = (payments[key] || 0) + (d.amountPaid || 0);
+      // Prefer per-forward-event aggregation when available
+      const perEventKey = d.forwardEventId ? `${d.voucherId}_${d.forwardEventId}` : null;
+      if (perEventKey) {
+        payments[perEventKey] = (payments[perEventKey] || 0) + (d.amountPaid || 0);
+        return;
+      }
+      // Back-compat: fall back to vendor+jobWork aggregation if legacy record
+      const legacyKey = `${d.voucherId}_${d.vendorId}_${d.jobWorkDone}`;
+      payments[legacyKey] = (payments[legacyKey] || 0) + (d.amountPaid || 0);
     });
     const paymentRows: PaymentRow[] = [];
     vouchersSnapshot.forEach(voucherDoc => {
@@ -120,8 +126,11 @@ export default function AdminPaymentComponent() {
             const netQty = event.details.quantity_forwarded;
             const totalAmount = pricePerPiece * netQty;
             const jobWorkDone = event.details.jobWork || vendor.vendorJobWork || 'N/A';
-            const key = `${voucherId}_${event.details.sender_id}_${jobWorkDone}`;  // Changed from receiver_id to sender_id
-            const amountPaid = payments[key] || 0;
+            // Compute paid amount per forward event if possible
+            const perEventKey = `${voucherId}_${event.event_id || idx}`;
+            // Legacy fall back key if no per-event payments exist
+            const legacyKey = `${voucherId}_${event.details.sender_id}_${jobWorkDone}`;
+            const amountPaid = (payments[perEventKey] ?? payments[legacyKey] ?? 0);
             const pendingAmount = totalAmount - amountPaid;
             let status: PaymentRow['status'] = 'Unpaid';
             // Consider zero-total rows as Paid and allow marking paid via action
@@ -135,7 +144,7 @@ export default function AdminPaymentComponent() {
               status = 'Partially Paid';
             }
             paymentRows.push({
-              id: `${voucherId}_${event.details.sender_id}_${idx}`,  // Changed from receiver_id to sender_id
+              id: `${voucherId}_${event.event_id || idx}`,
               vendorId: event.details.sender_id,  // Changed from receiver_id to sender_id
               vendorName: vendor.companyName || `${vendor.firstName} ${vendor.surname}`,
               vendorCode: vendor.userCode,
@@ -689,6 +698,8 @@ export default function AdminPaymentComponent() {
                   createdAt: serverTimestamp(),
                   paymentFrom: adminUser?.firstName && adminUser?.surname ? `${adminUser.firstName} ${adminUser.surname}` : adminUser?.email,
                   adminId: adminUser?.uid,
+                  // Store forwardEventId to bind payment to exact partial forward
+                  forwardEventId: payModal.row.id.split('_').slice(-1)[0] ? (payModal.row.id.includes('_') ? payModal.row.id.split('_').slice(-1)[0] : payModal.row.id) : undefined
                 });
                 // Send payment notification to vendor
                 await notificationService.sendPaymentNotification({

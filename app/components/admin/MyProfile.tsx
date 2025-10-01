@@ -224,13 +224,18 @@ export default function MyProfile() {
       const paymentsSnapshot = await getDocs(paymentsQuery);
       console.log('Found payment records:', paymentsSnapshot.size);
 
-      // Create a map of payments by voucher and job work
+      // Create maps for payments per forward event (preferred) and legacy keys
+      const paymentsByEvent: Record<string, number> = {};
       const paymentsMap: Record<string, number> = {};
       paymentsSnapshot.forEach((doc) => {
         const payment = doc.data() as Payment;
-        const key = `${payment.voucherId}_${payment.vendorId}_${payment.jobWorkDone}`;
-        paymentsMap[key] = (paymentsMap[key] || 0) + (payment.amountPaid || 0);
-        console.log('Payment record:', { key, amountPaid: payment.amountPaid, voucherId: payment.voucherId, jobWorkDone: payment.jobWorkDone });
+        const eventKey = payment.forwardEventId ? `${payment.voucherId}_${payment.forwardEventId}` : null;
+        if (eventKey) {
+          paymentsByEvent[eventKey] = (paymentsByEvent[eventKey] || 0) + (payment.amountPaid || 0);
+        }
+        const legacyKey = `${payment.voucherId}_${payment.vendorId}_${payment.jobWorkDone}`;
+        paymentsMap[legacyKey] = (paymentsMap[legacyKey] || 0) + (payment.amountPaid || 0);
+        console.log('Payment record:', { eventKey, legacyKey, amountPaid: payment.amountPaid, voucherId: payment.voucherId, jobWorkDone: payment.jobWorkDone });
 
         transactions.push({
           id: doc.id,
@@ -281,9 +286,10 @@ export default function MyProfile() {
               const vendorCode = event.details.vendorCode || voucherData.vendorCode || 'N/A';
               const jobWorkDone = event.details.jobWork || voucherData.jobWork || '';
 
-              // Calculate amount paid for this specific work
-              const paymentKey = `${voucherDoc.id}_${vendorId}_${jobWorkDone}`;
-              const amountPaid = paymentsMap[paymentKey] || 0;
+              // Calculate amount paid for this specific forward event (preferred) with legacy fallback
+              const perEventKey = `${voucherDoc.id}_${event.event_id}`;
+              const legacyKey = `${voucherDoc.id}_${vendorId}_${jobWorkDone}`;
+              const amountPaid = (paymentsByEvent[perEventKey] ?? paymentsMap[legacyKey] ?? 0);
               const pendingAmount = totalAmount - amountPaid;
 
               console.log('Voucher transaction:', {

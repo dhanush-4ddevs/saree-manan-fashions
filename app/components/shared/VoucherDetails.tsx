@@ -108,15 +108,20 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
         );
         const paymentsSnapshot = await getDocs(paymentsQuery);
 
-        // Index payments by (vendorId + jobWorkDone) and by vendorId alone to handle inconsistent jobWork naming
+        // Index payments per forward event when available; fallback to vendor+jobWork
+        const paymentsByEvent: Record<string, number> = {};
         const paymentsByVendorAndJob: Record<string, number> = {};
         const paymentsByVendorOnly: Record<string, number> = {};
         paymentsSnapshot.forEach(docSnap => {
           const paymentData = docSnap.data() as any;
+          const forwardEventId = paymentData.forwardEventId as string | undefined;
           const vendorIdInPayment = paymentData.vendorId;
           const jobWorkInPayment = (paymentData.jobWorkDone || 'N/A') as string;
           const keyedByBoth = `${vendorIdInPayment}_${jobWorkInPayment}`;
           const amount = Number(paymentData.amountPaid || 0);
+          if (forwardEventId) {
+            paymentsByEvent[forwardEventId] = (paymentsByEvent[forwardEventId] || 0) + amount;
+          }
           paymentsByVendorAndJob[keyedByBoth] = (paymentsByVendorAndJob[keyedByBoth] || 0) + amount;
           if (vendorIdInPayment) {
             paymentsByVendorOnly[vendorIdInPayment] = (paymentsByVendorOnly[vendorIdInPayment] || 0) + amount;
@@ -137,15 +142,15 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
           const quantity = event.details.quantity_forwarded || 0;
           const totalAmount = pricePerPiece * quantity;
 
-          const paymentKey = `${vendorId}_${jobWork}`;  // Changed from receiver_id to sender_id
-          const amountPaid = (paymentsByVendorAndJob[paymentKey] ?? paymentsByVendorOnly[vendorId] ?? 0);
+          // Prefer exact per-event payments, fallback to vendor+jobWork or vendor-only legacy aggregation
+          const amountPaid = (paymentsByEvent[event.event_id] ?? paymentsByVendorAndJob[`${vendorId}_${jobWork}`] ?? paymentsByVendorOnly[vendorId] ?? 0);
           const pendingAmount = totalAmount - amountPaid;
 
           const vendorName = userNames[vendorId]?.name || vendorId;
           const vendorCode = userNames[vendorId]?.userCode || 'N/A';
 
           const paymentRecord = {
-            id: `${voucher.id}_${vendorId}_${jobWork}`,  // Changed from receiver_id to sender_id
+            id: `${voucher.id}_${event.event_id}`,
             vendor: vendorName,
             vendorCode: vendorCode,
             jobWork: jobWork,
