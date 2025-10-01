@@ -38,6 +38,7 @@ interface PaymentRow {
   pendingAmount: number;
   status: 'Paid' | 'Partially Paid' | 'Unpaid';
   voucherStatus: VoucherStatus;
+  forwardEventId: string;
 }
 
 type SortField = 'voucherNo' | 'vendorName' | 'voucherDate' | 'totalAmount' | 'pendingAmount' | 'status' | 'voucherStatus';
@@ -160,6 +161,7 @@ export default function AdminPaymentComponent() {
               pendingAmount,
               status,
               voucherStatus,
+              forwardEventId: event.event_id || String(idx),
             });
           }
         });
@@ -698,8 +700,8 @@ export default function AdminPaymentComponent() {
                   createdAt: serverTimestamp(),
                   paymentFrom: adminUser?.firstName && adminUser?.surname ? `${adminUser.firstName} ${adminUser.surname}` : adminUser?.email,
                   adminId: adminUser?.uid,
-                  // Store forwardEventId to bind payment to exact partial forward
-                  forwardEventId: payModal.row.id.split('_').slice(-1)[0] ? (payModal.row.id.includes('_') ? payModal.row.id.split('_').slice(-1)[0] : payModal.row.id) : undefined
+                  // Explicitly store the forward event id from row
+                  forwardEventId: payModal.row.forwardEventId
                 });
                 // Send payment notification to vendor
                 await notificationService.sendPaymentNotification({
