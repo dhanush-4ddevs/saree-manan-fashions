@@ -13,6 +13,7 @@ export interface VoucherEvent {
     jobWork?: JobWorkType;
     sender_id?: string;
     receiver_id?: string;
+    is_admin_receive?: boolean;
     quantity_dispatched?: number;
     quantity_expected?: number;
     quantity_received?: number;

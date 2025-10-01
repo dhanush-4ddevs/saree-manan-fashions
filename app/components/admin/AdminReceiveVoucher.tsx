@@ -271,6 +271,7 @@ export default function AdminReceiveVoucher() {
           comment: 'Admin received completion request',
           details: {
             receiver_id: currentUser.uid,
+            is_admin_receive: true,
             quantity_received: forwardEvent.details.quantity_forwarded || 0
           }
         };
