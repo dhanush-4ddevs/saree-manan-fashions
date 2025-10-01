@@ -585,8 +585,8 @@ export default function ReceiveReport() {
           <button
             onClick={() => setViewMode('table')}
             className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${viewMode === 'table'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-white hover:bg-white hover:bg-opacity-20'
+              ? 'bg-white text-blue-700 shadow-sm'
+              : 'text-white hover:bg-white hover:bg-opacity-20'
               }`}
           >
             <List className="h-4 w-4 mr-1" />
@@ -595,8 +595,8 @@ export default function ReceiveReport() {
           <button
             onClick={() => setViewMode('card')}
             className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${viewMode === 'card'
-                ? 'bg-white text-blue-700 shadow-sm'
-                : 'text-white hover:bg-white hover:bg-opacity-20'
+              ? 'bg-white text-blue-700 shadow-sm'
+              : 'text-white hover:bg-white hover:bg-opacity-20'
               }`}
           >
             <Grid3X3 className="h-4 w-4 mr-1" />
@@ -839,8 +839,8 @@ export default function ReceiveReport() {
                   <button
                     onClick={() => setAlreadyReceivedViewMode('table')}
                     className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${alreadyReceivedViewMode === 'table'
-                        ? 'bg-white text-green-700 shadow-sm'
-                        : 'text-white hover:bg-white hover:bg-opacity-20'
+                      ? 'bg-white text-green-700 shadow-sm'
+                      : 'text-white hover:bg-white hover:bg-opacity-20'
                       }`}
                   >
                     <List className="h-4 w-4 mr-1" />
@@ -849,8 +849,8 @@ export default function ReceiveReport() {
                   <button
                     onClick={() => setAlreadyReceivedViewMode('card')}
                     className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-200 ${alreadyReceivedViewMode === 'card'
-                        ? 'bg-white text-green-700 shadow-sm'
-                        : 'text-white hover:bg-white hover:bg-opacity-20'
+                      ? 'bg-white text-green-700 shadow-sm'
+                      : 'text-white hover:bg-white hover:bg-opacity-20'
                       }`}
                   >
                     <Grid3X3 className="h-4 w-4 mr-1" />

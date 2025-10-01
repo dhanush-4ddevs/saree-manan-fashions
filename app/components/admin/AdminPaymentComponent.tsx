@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { db, getCurrentUser, User } from '../../config/firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import { Printer, CheckCircle, CreditCard, IndianRupee, Filter, SortAsc, SortDesc, Search, Calendar, DollarSign, TrendingUp, TrendingDown, RefreshCw, Download, Eye, MoreHorizontal, Clock, Info } from 'lucide-react';
 import { addDoc, serverTimestamp, collection as fsCollection, getDocs as fsGetDocs, query as fsQuery, where as fsWhere } from 'firebase/firestore';
 import { Dialog } from '@headlessui/react';
@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation';
 import { VoucherStatus } from '../../types/voucher';
 import { getStatusBackgroundColor } from '../../utils/voucherStatusManager';
 import { PaymentPrintPreviewModal } from './PaymentPrintPreviewModal';
+import VoucherDetails from '../shared/VoucherDetails';
+import { Voucher } from '../../types/voucher';
 
 interface Vendor {
   id: string;
@@ -66,85 +68,96 @@ export default function AdminPaymentComponent() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showFilters, setShowFilters] = useState(false);
 
-  const fetchData = useCallback(async () => {
-      setLoading(true);
-      // Fetch vendors
-      const usersSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'vendor')));
-      const vendors: Record<string, Vendor> = {};
-      usersSnapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        vendors[docSnap.id] = {
-          id: docSnap.id,
-          userCode: d.userCode || '',
-          firstName: d.firstName || '',
-          surname: d.surname || '',
-          companyName: d.companyName || '',
-          vendorJobWork: d.vendorJobWork || '',
-        };
-      });
-      // Fetch vouchers
-      const vouchersSnapshot = await getDocs(query(collection(db, 'vouchers')));
-      // Fetch payments
-      const paymentsSnapshot = await fsGetDocs(fsQuery(fsCollection(db, 'payments')));
-      const payments: Record<string, number> = {};
-      paymentsSnapshot.forEach(docSnap => {
-        const d = docSnap.data();
-        // Key: voucherId_vendorId_jobWork
-        const key = `${d.voucherId}_${d.vendorId}_${d.jobWorkDone}`;
-        payments[key] = (payments[key] || 0) + (d.amountPaid || 0);
-      });
-      const paymentRows: PaymentRow[] = [];
-      vouchersSnapshot.forEach(voucherDoc => {
-        const voucher = voucherDoc.data();
-        const voucherId = voucherDoc.id;
-        const voucherNo = voucher.voucherNo || voucher.voucher_no || `V-${voucherId.substring(0, 6)}`;
-        const voucherStatus = voucher.voucher_status || 'Dispatched'; // Default to Dispatched if not set
+  // Inline voucher details modal state
+  const [voucherModal, setVoucherModal] = useState<{ open: boolean; voucher: Voucher | null }>({ open: false, voucher: null });
+  const [voucherDetailsRefreshKey, setVoucherDetailsRefreshKey] = useState(0);
 
-        if (Array.isArray(voucher.events)) {
-          voucher.events.forEach((event: any, idx: number) => {
-            if (
-              event.event_type === 'forward' &&
-              event.details &&
-              typeof event.details.price_per_piece === 'number' &&
-              typeof event.details.quantity_forwarded === 'number' &&
-              vendors[event.details.sender_id]  // Changed from receiver_id to sender_id
-            ) {
-              const vendor = vendors[event.details.sender_id];  // Changed from receiver_id to sender_id
-              const pricePerPiece = event.details.price_per_piece;
-              const netQty = event.details.quantity_forwarded;
-              const totalAmount = pricePerPiece * netQty;
-              const jobWorkDone = event.details.jobWork || vendor.vendorJobWork || 'N/A';
-              const key = `${voucherId}_${event.details.sender_id}_${jobWorkDone}`;  // Changed from receiver_id to sender_id
-              const amountPaid = payments[key] || 0;
-              const pendingAmount = totalAmount - amountPaid;
-              let status: PaymentRow['status'] = 'Unpaid';
-              if (amountPaid === 0) status = 'Unpaid';
-              else if (pendingAmount > 0) status = 'Partially Paid';
-              else status = 'Paid';
-              paymentRows.push({
-                id: `${voucherId}_${event.details.sender_id}_${idx}`,  // Changed from receiver_id to sender_id
-                vendorId: event.details.sender_id,  // Changed from receiver_id to sender_id
-                vendorName: vendor.companyName || `${vendor.firstName} ${vendor.surname}`,
-                vendorCode: vendor.userCode,
-                voucherId,
-                voucherNo,
-                voucherDate: event.timestamp || voucher.createdAt?.toDate?.()?.toISOString()?.split('T')[0] || voucher.created_at || '',
-                itemName: voucher.item || voucher.item_details?.item_name || '',
-                jobWorkDone,
-                pricePerPiece,
-                netQty,
-                totalAmount,
-                amountPaid,
-                pendingAmount,
-                status,
-                voucherStatus,
-              });
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    // Fetch vendors
+    const usersSnapshot = await getDocs(query(collection(db, 'users'), where('role', '==', 'vendor')));
+    const vendors: Record<string, Vendor> = {};
+    usersSnapshot.forEach(docSnap => {
+      const d = docSnap.data();
+      vendors[docSnap.id] = {
+        id: docSnap.id,
+        userCode: d.userCode || '',
+        firstName: d.firstName || '',
+        surname: d.surname || '',
+        companyName: d.companyName || '',
+        vendorJobWork: d.vendorJobWork || '',
+      };
+    });
+    // Fetch vouchers
+    const vouchersSnapshot = await getDocs(query(collection(db, 'vouchers')));
+    // Fetch payments
+    const paymentsSnapshot = await fsGetDocs(fsQuery(fsCollection(db, 'payments')));
+    const payments: Record<string, number> = {};
+    paymentsSnapshot.forEach(docSnap => {
+      const d = docSnap.data();
+      // Key: voucherId_vendorId_jobWork
+      const key = `${d.voucherId}_${d.vendorId}_${d.jobWorkDone}`;
+      payments[key] = (payments[key] || 0) + (d.amountPaid || 0);
+    });
+    const paymentRows: PaymentRow[] = [];
+    vouchersSnapshot.forEach(voucherDoc => {
+      const voucher = voucherDoc.data();
+      const voucherId = voucherDoc.id;
+      const voucherNo = voucher.voucherNo || voucher.voucher_no || `V-${voucherId.substring(0, 6)}`;
+      const voucherStatus = voucher.voucher_status || 'Dispatched'; // Default to Dispatched if not set
+
+      if (Array.isArray(voucher.events)) {
+        voucher.events.forEach((event: any, idx: number) => {
+          if (
+            event.event_type === 'forward' &&
+            event.details &&
+            typeof event.details.price_per_piece === 'number' &&
+            typeof event.details.quantity_forwarded === 'number' &&
+            vendors[event.details.sender_id]  // Changed from receiver_id to sender_id
+          ) {
+            const vendor = vendors[event.details.sender_id];  // Changed from receiver_id to sender_id
+            const pricePerPiece = event.details.price_per_piece;
+            const netQty = event.details.quantity_forwarded;
+            const totalAmount = pricePerPiece * netQty;
+            const jobWorkDone = event.details.jobWork || vendor.vendorJobWork || 'N/A';
+            const key = `${voucherId}_${event.details.sender_id}_${jobWorkDone}`;  // Changed from receiver_id to sender_id
+            const amountPaid = payments[key] || 0;
+            const pendingAmount = totalAmount - amountPaid;
+            let status: PaymentRow['status'] = 'Unpaid';
+            // Consider zero-total rows as Paid and allow marking paid via action
+            if (totalAmount === 0) {
+              status = 'Paid';
+            } else if (pendingAmount <= 0) {
+              status = 'Paid';
+            } else if (amountPaid === 0) {
+              status = 'Unpaid';
+            } else {
+              status = 'Partially Paid';
             }
-          });
-        }
-      });
-      setRows(paymentRows);
-      setLoading(false);
+            paymentRows.push({
+              id: `${voucherId}_${event.details.sender_id}_${idx}`,  // Changed from receiver_id to sender_id
+              vendorId: event.details.sender_id,  // Changed from receiver_id to sender_id
+              vendorName: vendor.companyName || `${vendor.firstName} ${vendor.surname}`,
+              vendorCode: vendor.userCode,
+              voucherId,
+              voucherNo,
+              voucherDate: event.timestamp || voucher.createdAt?.toDate?.()?.toISOString()?.split('T')[0] || voucher.created_at || '',
+              itemName: voucher.item || voucher.item_details?.item_name || '',
+              jobWorkDone,
+              pricePerPiece,
+              netQty,
+              totalAmount,
+              amountPaid,
+              pendingAmount,
+              status,
+              voucherStatus,
+            });
+          }
+        });
+      }
+    });
+    setRows(paymentRows);
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -262,15 +275,28 @@ export default function AdminPaymentComponent() {
     setPrintPreviewModal({ open: true, reportType: 'all' });
   };
 
-  const handleRowClick = (row: PaymentRow, event: React.MouseEvent) => {
+  const handleRowClick = async (row: PaymentRow, event: React.MouseEvent) => {
     // Prevent navigation if clicking on action buttons
     const target = event.target as HTMLElement;
     if (target.closest('button') || target.closest('.action-buttons')) {
       return;
     }
 
-    // Navigate to All Vouchers page with voucher details view
-    router.push(`/admin-dashboard?tab=All%20Vouchers&viewMode=details&voucherId=${row.voucherId}`);
+    // Open inline voucher details modal on the same page
+    try {
+      const voucherRef = doc(db, 'vouchers', row.voucherId);
+      const voucherSnap = await getDoc(voucherRef);
+      if (voucherSnap.exists()) {
+        const data = voucherSnap.data() as any;
+        const voucher: Voucher = {
+          id: voucherSnap.id,
+          ...data,
+        } as Voucher;
+        setVoucherModal({ open: true, voucher });
+      }
+    } catch (err) {
+      console.error('Failed to open voucher details:', err);
+    }
   };
 
   return (
@@ -675,12 +701,14 @@ export default function AdminPaymentComponent() {
                 setSaving(false);
                 setPayModal({ open: false, row: null });
                 setPayAmount('');
+                // Trigger refresh of VoucherDetails payments if open
+                setVoucherDetailsRefreshKey(prev => prev + 1);
               }}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Pay</label>
                   <input
                     type="number"
-                    min={1}
+                    min={payModal.row && payModal.row.totalAmount === 0 ? 0 : 1}
                     max={payModal.row ? payModal.row.pendingAmount : undefined}
                     value={payAmount}
                     onChange={e => setPayAmount(e.target.value)}
@@ -723,6 +751,15 @@ export default function AdminPaymentComponent() {
         reportType={printPreviewModal.reportType}
         singleRow={printPreviewModal.singleRow}
       />
+
+      {/* Voucher Details Modal */}
+      {voucherModal.open && voucherModal.voucher && (
+        <VoucherDetails
+          voucher={voucherModal.voucher}
+          onClose={() => setVoucherModal({ open: false, voucher: null })}
+          refreshKey={voucherDetailsRefreshKey}
+        />
+      )}
     </div>
   );
 }

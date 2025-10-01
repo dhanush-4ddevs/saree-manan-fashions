@@ -35,21 +35,22 @@ import { generateVoucherPDF } from '@/utils/pdfGenerator';
 interface VoucherDetailsProps {
   voucher: Voucher;
   onClose?: () => void;
+  refreshKey?: number;
 }
 
-export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps) {
+export default function VoucherDetails({ voucher, onClose, refreshKey }: VoucherDetailsProps) {
   // Get all images
   const allImages = [
     ...(voucher.item_details.images || [])
   ];
 
   // --- User name mapping state and logic ---
-  const [userNames, setUserNames] = useState<Record<string, { name: string; userCode: string }>>({});
+  const [userNames, setUserNames] = useState<Record<string, { name: string; userCode: string; vendorJobWork?: string }>>({});
   const [paymentInfo, setPaymentInfo] = useState<{ needed: any[]; completed: any[] }>({ needed: [], completed: [] });
 
   // Helper to fetch user display name and userCode from Firestore
   const fetchUserName = async (uid: string) => {
-    if (!uid) return { name: uid, userCode: '' };
+    if (!uid) return { name: uid, userCode: '', vendorJobWork: '' };
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
       if (userDoc.exists()) {
@@ -59,10 +60,10 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
         if (data.companyName) {
           name = name ? `${name} (${data.companyName})` : data.companyName;
         }
-        return { name: name || '-', userCode: data.userCode || '' };
+        return { name: name || '-', userCode: data.userCode || '', vendorJobWork: data.vendorJobWork || '' };
       }
     } catch { }
-    return { name: uid, userCode: '' };
+    return { name: uid, userCode: '', vendorJobWork: '' };
   };
 
   // Collect all unique user IDs (admin, sender, receiver) and fetch names
@@ -77,7 +78,7 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
     const missing = Array.from(userIds).filter(uid => !userNames[uid]);
     if (missing.length === 0) return;
     Promise.all(missing.map(uid => fetchUserName(uid))).then(results => {
-      const updates: Record<string, { name: string; userCode: string }> = {};
+      const updates: Record<string, { name: string; userCode: string; vendorJobWork?: string }> = {};
       missing.forEach((uid, i) => { updates[uid] = results[i]; });
       setUserNames(prev => ({ ...prev, ...updates }));
     });
@@ -107,11 +108,19 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
         );
         const paymentsSnapshot = await getDocs(paymentsQuery);
 
-        const payments: Record<string, number> = {};
-        paymentsSnapshot.forEach(doc => {
-          const paymentData = doc.data();
-          const key = `${paymentData.vendorId}_${paymentData.jobWorkDone}`;
-          payments[key] = (payments[key] || 0) + (paymentData.amountPaid || 0);
+        // Index payments by (vendorId + jobWorkDone) and by vendorId alone to handle inconsistent jobWork naming
+        const paymentsByVendorAndJob: Record<string, number> = {};
+        const paymentsByVendorOnly: Record<string, number> = {};
+        paymentsSnapshot.forEach(docSnap => {
+          const paymentData = docSnap.data() as any;
+          const vendorIdInPayment = paymentData.vendorId;
+          const jobWorkInPayment = (paymentData.jobWorkDone || 'N/A') as string;
+          const keyedByBoth = `${vendorIdInPayment}_${jobWorkInPayment}`;
+          const amount = Number(paymentData.amountPaid || 0);
+          paymentsByVendorAndJob[keyedByBoth] = (paymentsByVendorAndJob[keyedByBoth] || 0) + amount;
+          if (vendorIdInPayment) {
+            paymentsByVendorOnly[vendorIdInPayment] = (paymentsByVendorOnly[vendorIdInPayment] || 0) + amount;
+          }
         });
 
         const needed: any[] = [];
@@ -121,13 +130,15 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
           const vendorId = event.details.sender_id;  // Changed from receiver_id to sender_id
           if (!vendorId) return; // Skip if no vendor ID
 
-          const jobWork = event.details.jobWork || 'N/A';
+          // Prefer event jobWork, else fall back to vendor profile job work
+          const vendorProfileJobWork = userNames[vendorId]?.vendorJobWork || '';
+          const jobWork = (event.details.jobWork || vendorProfileJobWork || 'N/A');
           const pricePerPiece = event.details.price_per_piece || 0;
           const quantity = event.details.quantity_forwarded || 0;
           const totalAmount = pricePerPiece * quantity;
 
           const paymentKey = `${vendorId}_${jobWork}`;  // Changed from receiver_id to sender_id
-          const amountPaid = payments[paymentKey] || 0;
+          const amountPaid = (paymentsByVendorAndJob[paymentKey] ?? paymentsByVendorOnly[vendorId] ?? 0);
           const pendingAmount = totalAmount - amountPaid;
 
           const vendorName = userNames[vendorId]?.name || vendorId;
@@ -163,7 +174,7 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
     if (voucher.id) {
       fetchPaymentInfo();
     }
-  }, [voucher, userNames]);
+  }, [voucher, userNames, refreshKey]);
 
   // Get the initial dispatch event for transport and admin details
   const initialDispatchEvent = voucher.events.find(e => e.event_type === 'dispatch');
@@ -258,7 +269,13 @@ export default function VoucherDetails({ voucher, onClose }: VoucherDetailsProps
               <div className="flex items-center mt-1 space-x-3">
                 <span className="flex items-center text-blue-100 text-sm">
                   <Calendar className="h-3 w-3 mr-1" />
-                  {new Date(voucher.created_at).toLocaleDateString()}
+                  {(() => {
+                    const date = new Date(voucher.created_at);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = date.toLocaleString('en-US', { month: 'short' });
+                    const year = date.getFullYear();
+                    return `${day}-${month}-${year}`;
+                  })()}
                 </span>
                 <span className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${voucher.voucher_status?.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
                   voucher.voucher_status?.toLowerCase() === 'dispatched' ? 'bg-yellow-100 text-yellow-800' :

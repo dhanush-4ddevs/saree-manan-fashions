@@ -481,18 +481,14 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                           <div className="text-blue-800 text-xs">
                             {event.event_type === 'receive' ? (
                               <>
-                                {event.details.receiver_id && (
-                                  <div className="flex items-center mb-1">
-                                    <User className="h-3 w-3 mr-1 text-purple-600" />
-                                    <span className="font-medium">Received by: {userNames[event.details.receiver_id] || event.details.receiver_id}</span>
-                                  </div>
-                                )}
+
                                 {event.details.sender_id && (
                                   <div className="flex items-center">
                                     <User className="h-3 w-3 mr-1 text-blue-600" />
-                                    <span className="font-medium">From: {userNames[event.details.sender_id] || event.details.sender_id}</span>
+                                    <span className="font-medium"> Sent By: {userNames[event.details.sender_id] || event.details.sender_id}</span>
                                   </div>
                                 )}
+
                                 {/* Handle case where sender_id is missing for admin receive events */}
                                 {!event.details.sender_id && event.details.receiver_id && (
                                   (() => {
@@ -503,7 +499,7 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                         return (
                                           <div className="flex items-center">
                                             <User className="h-3 w-3 mr-1 text-blue-600" />
-                                            <span className="font-medium">From: {userNames[parentEvent.details.sender_id] || parentEvent.details.sender_id}</span>
+                                            <span className="font-medium"> Sent By: {userNames[parentEvent.details.sender_id] || parentEvent.details.sender_id}</span>
                                           </div>
                                         );
                                       }
@@ -525,19 +521,29 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                     return null;
                                   })()
                                 )}
+
+                                {/* Handle case where receiver_id is missing for admin receive events */}
+                                {event.details.receiver_id && (
+                                  <div className="flex items-center mb-1">
+                                    <User className="h-3 w-3 mr-1 text-purple-600" />
+                                    <span className="font-medium">Received by: {userNames[event.details.receiver_id] || event.details.receiver_id}</span>
+                                  </div>
+                                )}
+
+
                               </>
                             ) : (
                               <>
                                 {event.details.sender_id && (
                                   <div className="flex items-center mb-1">
                                     <User className="h-3 w-3 mr-1 text-blue-600" />
-                                    <span className="font-medium">From: {userNames[event.details.sender_id] || event.details.sender_id}</span>
+                                    <span className="font-medium">Sent By: {userNames[event.details.sender_id] || event.details.sender_id}</span>
                                   </div>
                                 )}
                                 {event.details.receiver_id && (
                                   <div className="flex items-center">
                                     <User className="h-3 w-3 mr-1 text-purple-600" />
-                                    <span className="font-medium">To: {userNames[event.details.receiver_id] || event.details.receiver_id}</span>
+                                    <span className="font-medium">Sent To: {userNames[event.details.receiver_id] || event.details.receiver_id}</span>
                                   </div>
                                 )}
                               </>
@@ -553,7 +559,7 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                             {event.details.quantity_dispatched && (
                               <div className="flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-lg">
                                 <Package className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Dispatched: {event.details.quantity_dispatched}</span>
+                                <span className="font-medium text-xs">Dispatched: {event.details.quantity_dispatched} Pieces</span>
                               </div>
                             )}
                             {event.details.quantity_received && (
@@ -625,8 +631,16 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                             <Truck className="h-3 w-3 mr-1" />
                             <span className="font-medium text-xs">Transport:</span>
                             <span className="ml-1 text-xs">{event.details.transport.transporter_name}</span>
+
+                          </div>
+                          <div className="flex items-center text-green-800">
                             {event.details.transport.lr_no && (
-                              <span className="ml-1 text-xs bg-green-100 px-1 py-0.5 rounded">LR: {event.details.transport.lr_no}</span>
+                              // <span className="ml-1 text-xs bg-green-100 px-1 py-0.5 rounded">LR: {event.details.transport.lr_no}</span>
+                              <>
+                                <FileText className="h-3 w-3 mr-1" />
+                                <span className="font-medium text-xs">LR No:</span>
+                                <span className="ml-1 text-xs">{event.details.transport.lr_no}</span>
+                              </>
                             )}
                           </div>
                         </div>
@@ -637,7 +651,8 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                         <div className="p-2 bg-gray-50 border-l-3 border-blue-400 rounded-r-lg">
                           <div className="flex items-start text-gray-700">
                             <MessageSquare className="h-3 w-3 mr-1 mt-0.5 text-gray-500 flex-shrink-0" />
-                            <span className="italic text-xs">"{event.comment}"</span>
+                            <span className=" text-xs">Comment: </span>
+                            <span className="italic text-xs ml-1">"{event.comment}"</span>
                           </div>
                         </div>
                       )}
@@ -718,31 +733,15 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                 {action.details.quantity_dispatched && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <Package className="h-3 w-3 mr-2 text-gray-500" />
-                                    <span className="font-medium">Dispatched: {action.details.quantity_dispatched}</span>
+                                    <span className="font-medium">Dispatched: {action.details.quantity_dispatched} Pieces</span>
                                   </div>
                                 )}
                                 {action.details.jobWork && (
                                   <div className="text-xs text-gray-700">
-                                    <span>Job Work: {action.details.jobWork}</span>
+                                    <span className="font-medium">Job Work: {action.details.jobWork}</span>
                                   </div>
                                 )}
-                                {action.details.transport && (
-                                  <div className="flex items-center text-xs text-gray-700">
-                                    <Truck className="h-3 w-3 mr-2 text-green-500" />
-                                    <span className="font-medium">Transport: {action.details.transport.transporter_name}</span>
-                                  </div>
-                                )}
-                                {action.details.transport?.lr_no && (
-                                  <div className="text-xs text-gray-700 ml-5">
-                                    <span>LR: {action.details.transport.lr_no}</span>
-                                  </div>
-                                )}
-                                {action.comment && (
-                                  <div className="flex items-center text-xs text-gray-700">
-                                    <MessageSquare className="h-3 w-3 mr-2 text-gray-500" />
-                                    <span className="italic">"{action.comment}"</span>
-                                  </div>
-                                )}
+
                                 {action.details.quantity_received && (
                                   <div className="flex items-center text-xs text-gray-700">
                                     <CheckCircle className="h-3 w-3 mr-2 text-purple-500" />
@@ -773,6 +772,25 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                   <div className="flex items-center text-xs text-orange-600">
                                     <AlertTriangle className="h-3 w-3 mr-2" />
                                     <span className="font-medium">Damage after job: {action.details.discrepancies?.damaged_after_job}</span>
+                                  </div>
+                                )}
+                                {action.details.transport && (
+                                  <div className="flex items-center text-xs text-gray-700">
+                                    <Truck className="h-3 w-3 mr-1 text-green-500" />
+                                    <span className="font-medium">Transport: {action.details.transport.transporter_name}</span>
+                                  </div>
+                                )}
+                                {action.details.transport?.lr_no && (
+                                  <div className="flex items-center text-xs text-gray-700">
+                                    <FileText className="h-3 w-3 mr-1 text-green-500" />
+                                    <span className="font-medium">LR No: {action.details.transport.lr_no}</span>
+                                  </div>
+                                )}
+                                {action.comment && (
+                                  <div className="flex items-center text-xs text-gray-700">
+                                    <MessageSquare className="h-3 w-3 mr-1 text-gray-500" />
+                                    <span className="text-xs">Comment: </span>
+                                    <span className="italic">"{action.comment}"</span>
                                   </div>
                                 )}
                               </div>
