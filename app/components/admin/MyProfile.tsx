@@ -64,6 +64,7 @@ interface Payment {
   amountPaid: number;
   paymentDate: any;
   createdAt: any;
+  forwardEventId?: string; // optional for backward compatibility
 }
 
 // New interface for all transactions (both paid and pending)
@@ -296,7 +297,7 @@ export default function MyProfile() {
                 voucherId: voucherDoc.id,
                 vendorId,
                 jobWorkDone,
-                paymentKey,
+                perEventKey,
                 amountPaid,
                 totalAmount,
                 pendingAmount
