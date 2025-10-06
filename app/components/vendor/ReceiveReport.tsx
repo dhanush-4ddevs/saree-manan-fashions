@@ -10,6 +10,7 @@ import { getCurrentUser } from '../../config/firebase';
 import { Voucher, VoucherEvent, generateEventId } from '../../types/voucher';
 import { ImageContainer } from '../shared/ImageContainer';
 import { determineNewStatus, updateVoucherStatus } from '../../utils/voucherStatusManager';
+import { notificationService } from '../../utils/notificationService';
 import { ReceiveReportCardGrid } from './ReceiveReportCardGrid';
 import { AlreadyReceivedCardGrid } from './AlreadyReceivedCardGrid';
 
@@ -555,6 +556,19 @@ export default function ReceiveReport() {
       setEditingVoucherId(null);
       // Refresh data to show changes
       fetchVouchersForUser(); // Re-fetch all data to ensure consistency
+
+      // Notify all admins about this vendor receive (non-blocking)
+      try {
+        await notificationService.sendAdminVendorReceiveNotification({
+          voucherNo: item.voucherNo,
+          voucherId: item.voucherId,
+          itemName: item.item,
+          quantity: item.quantityExpected - (Number(currentFormData.missing) || 0),
+          receiverCode: (await getCurrentUser())?.userCode
+        });
+      } catch (e) {
+        console.error('Failed to send admin vendor receive notification', e);
+      }
 
     } catch (error) {
       console.error('Error saving voucher:', error);

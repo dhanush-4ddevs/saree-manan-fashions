@@ -61,6 +61,52 @@ export const notificationService = {
   },
 
   /**
+   * Send admin notification to ALL admins when a vendor receives a voucher
+   */
+  async sendAdminVendorReceiveNotification({
+    voucherNo,
+    voucherId,
+    itemName,
+    quantity,
+    receiverCode
+  }: {
+    voucherNo: string;
+    voucherId: string;
+    itemName?: string;
+    quantity?: number;
+    receiverCode?: string;
+  }) {
+    try {
+      const adminUsers = await this.getAllAdminUsers();
+
+      if (adminUsers.length === 0) {
+        console.log('No admin users found to notify about vendor receive');
+        return;
+      }
+
+      const title = 'Voucher Received by Vendor';
+      const message = `Voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${typeof quantity === 'number' ? `, Qty: ${quantity}` : ''} has been received${receiverCode ? ` by ${receiverCode}` : ''}.`;
+
+      const notifications = adminUsers.map(admin =>
+        this.createNotification({
+          userId: admin.id,
+          title,
+          message,
+          voucherNo,
+          eventType: 'receive',
+          eventId: voucherId,
+          extra: { itemName, quantity, receiverCode }
+        })
+      );
+
+      await Promise.all(notifications);
+      console.log(`Sent vendor receive notifications to ${adminUsers.length} admin(s)`);
+    } catch (error) {
+      console.error('Error sending admin vendor receive notification:', error);
+    }
+  },
+
+  /**
    * Delete a single notification
    * @param notificationId - The notification ID to delete
    * @returns True if deleted successfully, false otherwise
