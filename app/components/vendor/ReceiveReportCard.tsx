@@ -67,9 +67,8 @@ export function ReceiveReportCard({
   const netQty = receivedQty - damagedQty;
 
   return (
-    <div className={`bg-white rounded-lg border-2 shadow-sm hover:shadow-md transition-shadow duration-200 ${
-      isEditing ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'
-    }`}>
+    <div className={`bg-white rounded-lg border-2 shadow-sm hover:shadow-md transition-shadow duration-200 ${isEditing ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'
+      }`}>
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -94,37 +93,8 @@ export function ReceiveReportCard({
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={() => onSave(item.id)}
-                  disabled={saving}
-                  className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:bg-gray-400 flex items-center space-x-1"
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save</span>
-                </button>
-                <button
-                  onClick={() => onCancel(item.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 flex items-center space-x-1"
-                >
-                  <X className="h-4 w-4" />
-                  <span>Cancel</span>
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => onEdit(item.id)}
-                disabled={item.isForwarded}
-                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-1"
-                title={item.isForwarded ? "Cannot edit: this voucher has been forwarded." : "Edit Received Voucher"}
-              >
-                <Edit className="h-4 w-4" />
-                <span>{item.quantityReceived > 0 ? 'Edit' : 'Receive'}</span>
-              </button>
-            )}
-          </div>
+          {/* Actions moved to footer */}
+          <div className="hidden" />
         </div>
       </div>
 
@@ -254,12 +224,11 @@ export function ReceiveReportCard({
         <div className="flex items-center justify-between">
           <div>
             <h4 className="font-medium text-gray-900 mb-1">Status</h4>
-            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-              item.status === 'Received' ? 'bg-green-100 text-green-800' :
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.status === 'Received' ? 'bg-green-100 text-green-800' :
               item.status === 'Dispatched' ? 'bg-blue-100 text-blue-800' :
-              item.status === 'Forwarded' ? 'bg-purple-100 text-purple-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
+                item.status === 'Forwarded' ? 'bg-purple-100 text-purple-800' :
+                  'bg-gray-100 text-gray-800'
+              }`}>
               {item.status}
             </span>
           </div>
@@ -268,6 +237,41 @@ export function ReceiveReportCard({
               <AlertTriangle className="h-4 w-4 mr-1" />
               <span>Forwarded</span>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="px-4 pb-4">
+        <div className="mt-2 pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
+          {isEditing ? (
+            <>
+              <button
+                onClick={() => onSave(item.id)}
+                disabled={saving}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-gray-400 flex items-center gap-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>Save</span>
+              </button>
+              <button
+                onClick={() => onCancel(item.id)}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                <span>Cancel</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onEdit(item.id)}
+              disabled={item.isForwarded}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+              title={item.isForwarded ? "Cannot edit: this voucher has been forwarded." : "Edit Received Voucher"}
+            >
+              <Edit className="h-4 w-4" />
+              <span>{item.quantityReceived > 0 ? 'Edit' : 'Receive'}</span>
+            </button>
           )}
         </div>
       </div>

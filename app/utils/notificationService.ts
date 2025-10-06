@@ -68,13 +68,13 @@ export const notificationService = {
     voucherId,
     itemName,
     quantity,
-    receiverCode
+    receiverName
   }: {
     voucherNo: string;
     voucherId: string;
     itemName?: string;
     quantity?: number;
-    receiverCode?: string;
+    receiverName?: string;
   }) {
     try {
       const adminUsers = await this.getAllAdminUsers();
@@ -85,7 +85,7 @@ export const notificationService = {
       }
 
       const title = 'Voucher Received by Vendor';
-      const message = `Voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${typeof quantity === 'number' ? `, Qty: ${quantity}` : ''} has been received${receiverCode ? ` by ${receiverCode}` : ''}.`;
+      const message = `Voucher ${voucherNo}${itemName ? ` (${itemName})` : ''}${typeof quantity === 'number' ? `, Qty: ${quantity}` : ''} has been received${receiverName ? ` by ${receiverName}` : ''}.`;
 
       const notifications = adminUsers.map(admin =>
         this.createNotification({
@@ -95,7 +95,7 @@ export const notificationService = {
           voucherNo,
           eventType: 'receive',
           eventId: voucherId,
-          extra: { itemName, quantity, receiverCode }
+          extra: { itemName, quantity, receiverName }
         })
       );
 

@@ -881,9 +881,9 @@ export default function ForwardReport() {
         });
 
         if (!voucherNo.includes(searchLower) &&
-            !itemName.includes(searchLower) &&
-            !receiverNames.includes(searchLower) &&
-            !jobWorks.includes(searchLower)) {
+          !itemName.includes(searchLower) &&
+          !receiverNames.includes(searchLower) &&
+          !jobWorks.includes(searchLower)) {
           return false;
         }
       }
@@ -1802,26 +1802,26 @@ export default function ForwardReport() {
                         <div className="flex items-start justify-between">
                           <div className="min-w-0 pr-3">
                             <div className="flex items-center flex-wrap gap-2">
-                              <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">#{voucher.voucher_no || 'N/A'}</span>
-                              <span className="text-sm font-semibold text-gray-800 truncate">{voucher.item_details?.item_name || 'N/A'}</span>
+                              <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">Voucher: #{voucher.voucher_no || 'N/A'}</span>
+                              <span className="text-sm sm:text-base font-semibold text-gray-800 truncate break-words">Item: {voucher.item_details?.item_name || 'N/A'}</span>
                             </div>
-                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">{qty} pcs</span>
+                            <div className="mt-2 flex flex-wrap gap-2 text-[11px] sm:text-xs">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Qty: {qty} pcs</span>
                               {latestEvent?.details?.jobWork && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">{latestEvent.details.jobWork}</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">Job: {latestEvent.details.jobWork}</span>
                               )}
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">₹{total}</span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">{transportLabel}</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Amt: ₹{total}</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Transport: {transportLabel}</span>
                             </div>
-                            <div className="mt-2 text-xs text-gray-600 truncate">
-                              Forwarded to: <span className="font-medium text-gray-700">{receiverLabel}</span>
+                            <div className="mt-2 text-[11px] sm:text-xs text-gray-600 truncate break-words">
+                              To: <span className="font-medium text-gray-700">{receiverLabel}</span>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xs text-gray-500">{latestEvent?.timestamp ? formatDate(latestEvent.timestamp) : 'N/A'}</div>
+                            <div className="text-[11px] sm:text-xs text-gray-500">Forwarded on: {latestEvent?.timestamp ? formatDate(latestEvent.timestamp) : 'N/A'}</div>
                             <div className="mt-2">
                               <span className="px-2 py-1 inline-flex text-[10px] leading-4 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                {voucher.voucher_status || 'Unknown'}
+                                Status: {voucher.voucher_status || 'Unknown'}
                               </span>
                             </div>
                           </div>
@@ -1854,24 +1854,31 @@ export default function ForwardReport() {
                               {allForwardEvents.map((forwardEvent: any, eventIndex: number) => (
                                 <div key={forwardEvent.event_id || eventIndex} className="bg-gray-50 p-2 rounded border border-gray-200">
                                   <div className="flex items-start justify-between">
-                                    <div className="text-xs text-gray-600">
+                                    <div className="text-[11px] sm:text-xs text-gray-600">
                                       <span className="font-medium text-gray-700 mr-1">#{eventIndex + 1}</span>
-                                      <span>{forwardEvent?.details?.quantity_forwarded || 0} pcs</span>
+                                      <span className="mr-2">Qty: {forwardEvent?.details?.quantity_forwarded || 0} pcs</span>
                                       {forwardEvent?.details?.jobWork && (
-                                        <span className="ml-2 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">{forwardEvent.details.jobWork}</span>
+                                        <span className="mr-2 px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">Job: {forwardEvent.details.jobWork}</span>
                                       )}
-                                      <span className="ml-2">to <span className="font-medium">{userNames[forwardEvent?.details?.receiver_id] || forwardEvent?.details?.receiver_id || 'N/A'}</span></span>
+                                      <span>To: <span className="font-medium">{userNames[forwardEvent?.details?.receiver_id] || forwardEvent?.details?.receiver_id || 'N/A'}</span></span>
                                     </div>
-                                    <div className="text-[10px] text-gray-500">{forwardEvent?.timestamp ? formatDate(forwardEvent.timestamp) : 'N/A'}</div>
+                                    <div className="text-[10px] text-gray-500">On: {forwardEvent?.timestamp ? formatDate(forwardEvent.timestamp) : 'N/A'}</div>
                                   </div>
-                                  <div className="mt-1 text-[11px] text-gray-600 flex flex-wrap gap-2">
-                                    <span>₹{(forwardEvent?.details?.quantity_forwarded || 0) * (forwardEvent?.details?.price_per_piece || 0)}</span>
+                                  <div className="mt-1 text-[11px] sm:text-xs text-gray-600 flex flex-wrap gap-2">
+                                    <span>Amount: ₹{(forwardEvent?.details?.quantity_forwarded || 0) * (forwardEvent?.details?.price_per_piece || 0)}</span>
                                     {forwardEvent?.details?.transport?.transporter_name && (
-                                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">{forwardEvent.details.transport.transporter_name}</span>
+                                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
+                                        Transport name: {forwardEvent.details.transport.transporter_name}
+                                      </span>
+                                    )}
+                                    {forwardEvent?.details?.transport?.lr_number && (
+                                      <span className="px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">
+                                        LR No: {forwardEvent.details.transport.lr_number}
+                                      </span>
                                     )}
                                   </div>
                                   {forwardEvent?.comment && (
-                                    <div className="mt-1 text-[11px] text-gray-600">
+                                    <div className="mt-1 text-[11px] sm:text-xs text-gray-600 break-words">
                                       <span className="font-medium">Comment:</span> {forwardEvent.comment}
                                     </div>
                                   )}

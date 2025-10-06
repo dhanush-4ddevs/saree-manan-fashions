@@ -552,19 +552,22 @@ export default function ReceiveReport() {
         }
       });
 
-      alert('Voucher saved successfully!');
+      alert('Voucher Recived successfully!');
       setEditingVoucherId(null);
       // Refresh data to show changes
       fetchVouchersForUser(); // Re-fetch all data to ensure consistency
 
       // Notify all admins about this vendor receive (non-blocking)
       try {
+        const currentUserForName = await getCurrentUser();
+        const fullName = currentUserForName ? `${currentUserForName.firstName || ''} ${currentUserForName.surname || ''}`.trim() : '';
+        const receiverName = currentUserForName ? (fullName || currentUserForName.email || currentUserForName.userCode) : undefined;
         await notificationService.sendAdminVendorReceiveNotification({
           voucherNo: item.voucherNo,
           voucherId: item.voucherId,
           itemName: item.item,
           quantity: item.quantityExpected - (Number(currentFormData.missing) || 0),
-          receiverCode: (await getCurrentUser())?.userCode
+          receiverName
         });
       } catch (e) {
         console.error('Failed to send admin vendor receive notification', e);
@@ -591,7 +594,7 @@ export default function ReceiveReport() {
       <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
         <div className="flex items-center">
           <FileText className="h-6 w-6 mr-2" />
-          <h1 className="text-2xl font-bold">VOUCHERS TO BE RECEIVED</h1>
+          <h1 className="text-xl lg:text-2xl font-bold">VOUCHERS TO BE RECEIVED</h1>
         </div>
 
         {/* View Toggle Buttons */}
