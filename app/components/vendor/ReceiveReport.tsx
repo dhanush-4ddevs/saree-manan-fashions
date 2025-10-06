@@ -831,7 +831,7 @@ export default function ReceiveReport() {
               <div className="p-4 bg-green-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
                 <div className="flex items-center">
                   <FileText className="h-6 w-6 mr-2" />
-                  <h1 className="text-2xl font-bold">ALREADY RECEIVED Vouchers</h1>
+                  <h1 className="text-2xl font-bold">ALREADY RECEIVED VOUCHERS</h1>
                 </div>
 
                 {/* View Toggle Buttons for Already Received */}
