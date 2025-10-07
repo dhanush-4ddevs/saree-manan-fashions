@@ -846,7 +846,7 @@ export default function AdminReceiveVoucher() {
                 PENDING VOUCHERS TO RECEIVE ({filteredVouchers.length})
               </h2>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 select-none">
               {filteredVouchers.flatMap((voucher) => {
                 const pendingEvents = getPendingForwardEvents(voucher);
                 return pendingEvents.map((event) => {
@@ -854,13 +854,13 @@ export default function AdminReceiveVoucher() {
                   return (
                     <div key={`${voucher.id}-${event.event_id}`} className="bg-white border border-blue-200 rounded-md shadow-sm p-3">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <div className="text-xs text-gray-500">Voucher No</div>
-                          <div className="text-sm font-semibold">{highlightSearchTerm(voucher.voucher_no, searchTerm)}</div>
+                          <div className="text-sm font-semibold break-words">{highlightSearchTerm(voucher.voucher_no, searchTerm)}</div>
                         </div>
                         <button
                           onClick={() => handleViewDetails(voucher, event)}
-                          className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs flex items-center gap-1"
+                          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-xs flex items-center gap-1 touch-manipulation transition-colors flex-shrink-0"
                         >
                           <Eye className="h-3 w-3" /> View
                         </button>
@@ -899,12 +899,13 @@ export default function AdminReceiveVoucher() {
                           <div className="font-medium truncate">{event.comment || '-'}</div>
                         </div>
                       </div>
-                      <div className="mt-3 flex flex-col xs:flex-row gap-2">
+                      <div className="mt-3 flex flex-col gap-2">
                         <button
                           onClick={() => handleReceiveVoucher(voucher, event)}
-                          className="w-full xs:w-auto px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                          className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors touch-manipulation font-medium flex items-center justify-center gap-2"
                         >
-                          Receive
+                          <Check className="h-4 w-4" />
+                          Receive Voucher
                         </button>
                       </div>
                     </div>
@@ -998,7 +999,7 @@ export default function AdminReceiveVoucher() {
               </div>
 
               {/* Mobile/Tablet Cards */}
-              <div className="block lg:hidden space-y-3">
+              <div className="block lg:hidden space-y-3 select-none">
                 {alreadyReceived.flatMap((voucher) => {
                   const receivedEvents = getReceivedForwardEvents(voucher);
 
@@ -1013,11 +1014,11 @@ export default function AdminReceiveVoucher() {
                     return (
                       <div key={`${voucher.id}-${event.event_id}`} className="bg-white border border-green-200 rounded-md shadow-sm p-3">
                         <div className="flex items-start justify-between gap-2">
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <div className="text-xs text-gray-500">Voucher No</div>
-                            <div className="text-sm font-semibold">{voucher.voucher_no}</div>
+                            <div className="text-sm font-semibold break-words">{voucher.voucher_no}</div>
                           </div>
-                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-[10px] font-medium h-fit">Received</span>
+                          <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-[10px] font-medium h-fit flex-shrink-0">Received</span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                           <div>
@@ -1060,7 +1061,7 @@ export default function AdminReceiveVoucher() {
                         <div className="mt-3 flex gap-2">
                           <button
                             onClick={() => handleViewDetails(voucher, event)}
-                            className="w-full px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm flex items-center justify-center gap-1"
+                            className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center justify-center gap-2 touch-manipulation transition-colors font-medium"
                           >
                             <Eye className="h-4 w-4" /> View Details
                           </button>
@@ -1088,76 +1089,93 @@ export default function AdminReceiveVoucher() {
 
       {/* Voucher Details Modal */}
       {showDetails && selectedVoucher && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Voucher Details</h2>
-              <button onClick={handleCloseDetails} className="text-gray-500 hover:text-gray-700">
-                <X className="h-6 w-6" />
-              </button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            {/* Modal Header - Mobile Optimized */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Voucher Details</h2>
+                <button
+                  onClick={handleCloseDetails}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors touch-manipulation"
+                  aria-label="Close modal"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
             </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold">Voucher No:</label>
-                  <p>{selectedVoucher.voucher_no}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Voucher Date:</label>
-                  <p>{formatDate(selectedVoucher.created_at)}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Item:</label>
-                  <p>{selectedVoucher.item_details?.item_name}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Job Work:</label>
-                  <p>{selectedEvent?.details?.sender_id ? (senderJobWorks[selectedEvent.details.sender_id] ?? 'Loading...') : '-'}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Quantity Forwarded:</label>
-                  <p>{selectedEvent.details.quantity_forwarded}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Status:</label>
-                  <p>{selectedVoucher.voucher_status}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">LR Number:</label>
-                  <p>{selectedEvent.details.transport?.lr_no || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">LR Date:</label>
-                  <p>{selectedEvent.details.transport?.lr_date ? formatDate(selectedEvent.details.transport.lr_date) : '-'}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Transport:</label>
-                  <p>{selectedEvent.details.transport?.transporter_name || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="font-semibold">Comment:</label>
-                  <p>{selectedEvent.comment || 'No comment'}</p>
+
+            {/* Modal Content - Mobile Responsive */}
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4">
+                {/* Mobile-first grid layout */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Voucher No:</label>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{selectedVoucher.voucher_no}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Voucher Date:</label>
+                    <p className="text-sm sm:text-base text-gray-900">{formatDate(selectedVoucher.created_at)}</p>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-sm font-semibold text-gray-600">Item:</label>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{selectedVoucher.item_details?.item_name}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Job Work:</label>
+                    <p className="text-sm sm:text-base text-gray-900">{selectedEvent?.details?.sender_id ? (senderJobWorks[selectedEvent.details.sender_id] ?? 'Loading...') : '-'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Quantity Forwarded:</label>
+                    <p className="text-sm sm:text-base text-gray-900">{selectedEvent.details.quantity_forwarded}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Status:</label>
+                    <p className="text-sm sm:text-base text-gray-900">{selectedVoucher.voucher_status}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">LR Number:</label>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{selectedEvent.details.transport?.lr_no || 'Not provided'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">LR Date:</label>
+                    <p className="text-sm sm:text-base text-gray-900">{selectedEvent.details.transport?.lr_date ? formatDate(selectedEvent.details.transport.lr_date) : '-'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-gray-600">Transport:</label>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{selectedEvent.details.transport?.transporter_name || 'Not provided'}</p>
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="text-sm font-semibold text-gray-600">Comment:</label>
+                    <p className="text-sm sm:text-base text-gray-900 break-words">{selectedEvent.comment || 'No comment'}</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                onClick={handleCloseDetails}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-              >
-                Close
-              </button>
-              {selectedVoucher && selectedEvent && !isForwardEventReceived(selectedVoucher, selectedEvent) && (
+
+            {/* Modal Footer - Mobile Optimized */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
                 <button
-                  onClick={() => {
-                    handleReceiveVoucher(selectedVoucher, selectedEvent);
-                    handleCloseDetails();
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  onClick={handleCloseDetails}
+                  className="w-full sm:w-auto px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors touch-manipulation font-medium"
                 >
-                  Receive Voucher
+                  Close
                 </button>
-              )}
+                {selectedVoucher && selectedEvent && !isForwardEventReceived(selectedVoucher, selectedEvent) && (
+                  <button
+                    onClick={() => {
+                      handleReceiveVoucher(selectedVoucher, selectedEvent);
+                      handleCloseDetails();
+                    }}
+                    className="w-full sm:w-auto px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors touch-manipulation font-medium flex items-center justify-center gap-2"
+                  >
+                    <Check className="h-4 w-4" />
+                    Receive Voucher
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
