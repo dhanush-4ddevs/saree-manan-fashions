@@ -137,9 +137,13 @@ export function VoucherCard({ voucher, onView, onPrint, onTrack, onEdit }: Vouch
       {/* Voucher ID and status */}
       <div className="flex justify-between items-start mb-1">
         <div>
-          <h3 className="text-blue-900 text-lg font-bold flex items-center">
+          <button
+            onClick={handleViewClick}
+            className="text-blue-600 hover:text-blue-800 hover:underline text-lg font-bold cursor-pointer transition-colors"
+            title="Click to view voucher details"
+          >
             {voucher.voucher_no}
-          </h3>
+          </button>
         </div>
         <span className={`px-4 py-1 rounded-full text-xs font-medium ${getStatusBackground(voucher.voucher_status)} ${getStatusText(voucher.voucher_status)}`}>
           {capitalize(voucher.voucher_status)}

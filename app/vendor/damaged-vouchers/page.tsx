@@ -146,7 +146,16 @@ export default function DamagedVouchers() {
                 filteredVouchers.map((voucher) => (
                   <tr key={voucher.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {voucher.id}
+                      <button
+                        onClick={() => {
+                          // Navigate to voucher details or open modal
+                          window.open(`/admin-dashboard?voucherId=${voucher.id}&viewMode=details`, '_blank');
+                        }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer transition-colors"
+                        title="Click to view voucher details"
+                      >
+                        {voucher.id}
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {voucher.voucherNumber}

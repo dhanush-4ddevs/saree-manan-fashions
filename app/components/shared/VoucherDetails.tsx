@@ -267,7 +267,7 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-lg flex-shrink-0">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-bold flex items-center">
+              <h2 className="text-lg lg:text-xl font-bold flex items-center">
                 <FileText className="h-5 w-5 mr-2" />
                 Voucher #{voucher.voucher_no}
               </h2>
@@ -417,43 +417,52 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
               </h3>
               <div className="space-y-3">
                 {journeySteps.map((step, index) => (
-                  <div key={step.id} className={`flex items-center space-x-3 p-2 rounded-md ${step.action === 'completed' ? 'bg-green-50 border border-green-200' : 'bg-blue-50'
+                  <div key={step.id} className={`p-3 rounded-md ${step.action === 'completed' ? 'bg-green-50 border border-green-200' : 'bg-blue-50'
                     }`}>
-                    <div className="flex-shrink-0">
-                      <div className={`w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold ${step.action === 'completed' ? 'bg-green-600' : 'bg-blue-600'
-                        }`}>
-                        {step.action === 'completed' ? '✓' : index + 1}
-                      </div>
-                    </div>
-                    <div className="flex-grow">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium text-gray-900 text-sm">{step.vendor}</span>
-                        <span className={`text-xs ${step.action === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>({step.vendorCode})</span>
-                        <ArrowRight className="h-3 w-3 text-gray-400" />
-                        <span className={`text-xs font-medium ${step.action === 'completed' ? 'text-green-700' : 'text-blue-700'
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className={`w-6 h-6 text-white rounded-full flex items-center justify-center text-xs font-bold ${step.action === 'completed' ? 'bg-green-600' : 'bg-blue-600'
                           }`}>
-                          {step.action === 'completed' ? 'COMPLETED' : step.action}
-                        </span>
-                      </div>
-                      {step.comment && (
-                        <div className={`mt-1 p-1 border-l-2 rounded-r ${step.action === 'completed'
-                          ? 'bg-green-50 border-green-300'
-                          : 'bg-blue-50 border-blue-300'
-                          }`}>
-                          <p className={`text-xs ${step.action === 'completed' ? 'text-green-800' : 'text-blue-800'
-                            }`}>
-                            <MessageSquare className="h-3 w-3 inline mr-1" />
-                            <span className="font-medium">Comment:</span> "{step.comment}"
-                          </p>
+                          {step.action === 'completed' ? '✓' : index + 1}
                         </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(step.timestamp).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 space-y-1 sm:space-y-0">
+                            <span className="font-medium text-gray-900 text-sm truncate">{step.vendor}</span>
+                            <span className={`text-xs ${step.action === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>({step.vendorCode})</span>
+                            <div className="flex items-center space-x-2">
+                              <ArrowRight className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                              <span className={`text-xs font-medium ${step.action === 'completed' ? 'text-green-700' : 'text-blue-700'
+                                }`}>
+                                {step.action === 'completed' ? 'COMPLETED' : step.action}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500 flex-shrink-0">
+                            {new Date(step.timestamp).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </div>
+                        {step.comment && (
+                          <div className={`mt-2 p-3 border-l-4 rounded-r ${step.action === 'completed'
+                            ? 'bg-green-50 border-green-300'
+                            : 'bg-blue-50 border-blue-300'
+                            }`}>
+                            <div className={`flex items-start text-xs ${step.action === 'completed' ? 'text-green-800' : 'text-blue-800'
+                              }`}>
+                              <MessageSquare className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <span className="font-medium">Comment:</span>
+                                <span className="italic break-words"> "{step.comment}"</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -470,11 +479,11 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <span className="text-xs text-gray-500">Transport Name:</span>
-                <p className="font-medium text-gray-900 text-sm">{transportDetails.name}</p>
+                <p className="font-medium text-gray-900 text-sm">{transportDetails.name ? transportDetails.name : 'Not provided'}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-500">LR Number:</span>
-                <p className="font-medium text-gray-900 text-sm">{transportDetails.lrNumber}</p>
+                <p className="font-medium text-gray-900 text-sm">{transportDetails.lrNumber || 'N/A'}</p>
               </div>
               <div>
                 <span className="text-xs text-gray-500">LR Date:</span>
@@ -493,9 +502,9 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
           </div>
 
           {/* Payment Information */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Payments Needed */}
-            <div className="bg-white border border-red-200 rounded-lg p-4">
+          {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"> */}
+          {/* Payments Needed */}
+          {/* <div className="bg-white border border-red-200 rounded-lg p-4">
               <h3 className="text-base font-semibold text-red-800 border-b border-red-200 pb-2 mb-3 flex items-center">
                 <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
                 Payments Due ({paymentInfo.needed.length})
@@ -542,10 +551,10 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
                   <p className="text-sm">No pending payments</p>
                 </div>
               )}
-            </div>
+            </div> */}
 
-            {/* Payments Completed */}
-            <div className="bg-white border border-green-200 rounded-lg p-4">
+          {/* Payments Completed */}
+          {/* <div className="bg-white border border-green-200 rounded-lg p-4">
               <h3 className="text-base font-semibold text-green-800 border-b border-green-200 pb-2 mb-3 flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
                 Payments Completed ({paymentInfo.completed.length})
@@ -583,8 +592,8 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
                   <p className="text-sm">No completed payments</p>
                 </div>
               )}
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
 
           {/* Additional Info */}
           {/* {voucher.comment && (

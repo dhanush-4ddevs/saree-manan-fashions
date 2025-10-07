@@ -1031,7 +1031,13 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {voucher.voucher_no}
+                          <button
+                            onClick={() => handleView(voucher)}
+                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium cursor-pointer transition-colors"
+                            title="Click to view voucher details"
+                          >
+                            {voucher.voucher_no}
+                          </button>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {new Date(voucher.created_at).toLocaleDateString('en-GB', {

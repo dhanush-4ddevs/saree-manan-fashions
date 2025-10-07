@@ -289,20 +289,27 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
   const availableQty = getCurrentAvailableQuantity(voucher);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-blue-800 flex items-center">
-          <FileText className="h-5 w-5 mr-2" />
-          Voucher Status: #{voucher.voucher_no}
-        </h2>
-        <div className="flex items-center space-x-2">
+    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+      {/* Mobile-responsive header */}
+      <div className="mb-6">
+        {/* Title section */}
+        <div className="flex items-center mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-blue-800 flex items-center">
+            <FileText className="h-5 w-5 mr-2" />
+            Voucher Status: #{voucher.voucher_no}
+          </h2>
+        </div>
+
+        {/* Status and actions section */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* Live status */}
           {lastUpdated && (
-            <div className="text-xs text-gray-500 mr-2">
-              <div className="flex items-center">
+            <div className="text-xs text-gray-500">
+              <div className="flex items-center mb-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse" title="Real-time tracking active"></div>
                 <span className="text-green-600 font-medium">Live</span>
               </div>
-              <div>Last sync: {lastUpdated.toLocaleString('en-GB', {
+              <div className="text-gray-600">Last sync: {lastUpdated.toLocaleString('en-GB', {
                 day: '2-digit',
                 month: 'short',
                 year: 'numeric',
@@ -313,12 +320,14 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
               })}</div>
             </div>
           )}
+
+          {/* Print Preview button */}
           <button
             onClick={() => setShowPrintPreview(true)}
             disabled={!voucher}
-            className="flex items-center px-3 py-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center px-4 py-2 text-sm text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
-            <Printer className="h-4 w-4 mr-1" />
+            <Printer className="h-4 w-4 mr-2" />
             Print Preview
           </button>
         </div>
@@ -330,83 +339,83 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
           <TrendingUp className="h-4 w-4 mr-2" />
           Voucher Statistics
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
           {/* Initial Quantity */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-blue-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-600 font-medium mb-1">Initial Quantity</p>
-                <p className="text-2xl font-bold text-blue-600">{statistics.initialQuantity}</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{statistics.initialQuantity}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Package className="h-6 w-6 text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-100 rounded-full flex-shrink-0 ml-2">
+                <Package className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Items created</p>
+            <p className="text-xs text-gray-500">Items created</p>
           </div>
 
           {/* Damaged on Arrival */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-red-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-600 font-medium mb-1">Damaged on Arrival</p>
-                <p className="text-2xl font-bold text-red-600">{statistics.damagedOnArrival}</p>
+                <p className="text-xl sm:text-2xl font-bold text-red-600">{statistics.damagedOnArrival}</p>
               </div>
-              <div className="p-3 bg-red-100 rounded-full">
-                <XCircle className="h-6 w-6 text-red-600" />
+              <div className="p-2 sm:p-3 bg-red-100 rounded-full flex-shrink-0 ml-2">
+                <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">During transit</p>
+            <p className="text-xs text-gray-500">During transit</p>
           </div>
 
           {/* Damaged After Job */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-orange-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-600 font-medium mb-1">Damaged After Job</p>
-                <p className="text-2xl font-bold text-orange-600">{statistics.damagedAfterJob}</p>
+                <p className="text-xl sm:text-2xl font-bold text-orange-600">{statistics.damagedAfterJob}</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-full">
-                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              <div className="p-2 sm:p-3 bg-orange-100 rounded-full flex-shrink-0 ml-2">
+                <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Post job work damage</p>
+            <p className="text-xs text-gray-500">Post job work damage</p>
           </div>
 
           {/* Total Missing */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-600 font-medium mb-1">Total Missing</p>
-                <p className="text-2xl font-bold text-yellow-600">{statistics.totalMissing}</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600">{statistics.totalMissing}</p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <HelpCircle className="h-6 w-6 text-yellow-600" />
+              <div className="p-2 sm:p-3 bg-yellow-100 rounded-full flex-shrink-0 ml-2">
+                <HelpCircle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-600" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Items missing</p>
+            <p className="text-xs text-gray-500">Items missing</p>
           </div>
 
           {/* Admin Received */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-green-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-600 font-medium mb-1">Admin Received</p>
-                <p className="text-2xl font-bold text-green-600">{statistics.adminReceivedQuantity}</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{statistics.adminReceivedQuantity}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <Archive className="h-6 w-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-green-100 rounded-full flex-shrink-0 ml-2">
+                <Archive className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Items received back</p>
+            <p className="text-xs text-gray-500">Items received back</p>
           </div>
         </div>
       </div>
 
       {/* View Mode Toggle */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
         <h3 className="text-sm font-medium text-gray-700 mb-3">Workflow View</h3>
-        <div className="flex space-x-1 bg-white rounded-lg p-1 border border-gray-300">
+        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1 bg-white rounded-lg p-1 border border-gray-300">
           <button
             onClick={() => setViewMode('chronological')}
             className={`flex-1 flex items-center justify-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${viewMode === 'chronological'
@@ -415,7 +424,8 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
               }`}
           >
             <History className="h-4 w-4 mr-2" />
-            Chronological
+            <span className="hidden sm:inline">Chronological</span>
+            <span className="sm:hidden">Chronological</span>
           </button>
           <button
             onClick={() => setViewMode('vendor')}
@@ -425,7 +435,8 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
               }`}
           >
             <Users className="h-4 w-4 mr-2" />
-            By Vendor
+            <span className="hidden sm:inline">By Vendor</span>
+            <span className="sm:hidden">By Vendor</span>
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">
@@ -583,30 +594,38 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                       {/* Damage Information */}
                       {event.details.discrepancies && (
                         <div className="mb-3">
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-col gap-2">
                             {event.event_type === 'receive' && (
-                              <div className="flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 rounded-lg">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Missing on arrival: {event.details.discrepancies.missing}</span>
+                              <div className="flex items-start px-3 py-2 bg-yellow-100 text-yellow-800 rounded-lg">
+                                <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <span className="font-medium text-xs block">Missing on arrival: {event.details.discrepancies.missing}</span>
+                                </div>
                               </div>
                             )}
                             {event.event_type === 'receive' && (
-                              <div className="flex items-center px-2 py-1 bg-red-100 text-red-800 rounded-lg">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Damaged on arrival: {event.details.discrepancies.damaged_on_arrival}</span>
-                                {event.details.discrepancies.damage_reason && (
-                                  event.details.discrepancies.damage_reason === 'NA' ? (
-                                    <span className="ml-1 text-xs">(no damage)</span>
-                                  ) : (
-                                    <span className="ml-1 text-xs">({event.details.discrepancies.damage_reason})</span>
-                                  )
-                                )}
+                              <div className="flex items-start px-3 py-2 bg-red-100 text-red-800 rounded-lg">
+                                <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-xs">
+                                    <span className="block">Damaged on arrival: {event.details.discrepancies.damaged_on_arrival}</span>
+                                    {event.details.discrepancies.damage_reason && (
+                                      event.details.discrepancies.damage_reason === 'NA' ? (
+                                        <span className="text-xs opacity-75">(no damage)</span>
+                                      ) : (
+                                        <span className="text-xs opacity-75 break-words">({event.details.discrepancies.damage_reason})</span>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             )}
                             {event.event_type === 'forward' && (
-                              <div className="flex items-center px-2 py-1 bg-orange-100 text-orange-800 rounded-lg">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                <span className="font-medium text-xs">Damage after job: {event.details.discrepancies.damaged_after_job}</span>
+                              <div className="flex items-start px-3 py-2 bg-orange-100 text-orange-800 rounded-lg">
+                                <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <span className="font-medium text-xs block">Damage after job: {event.details.discrepancies.damaged_after_job}</span>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -648,11 +667,13 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
 
                       {/* Comment */}
                       {event.comment && (
-                        <div className="p-2 bg-gray-50 border-l-3 border-blue-400 rounded-r-lg">
+                        <div className="p-3 bg-gray-50 border-l-4 border-blue-400 rounded-r-lg">
                           <div className="flex items-start text-gray-700">
-                            <MessageSquare className="h-3 w-3 mr-1 mt-0.5 text-gray-500 flex-shrink-0" />
-                            <span className=" text-xs">Comment: </span>
-                            <span className="italic text-xs ml-1">"{event.comment}"</span>
+                            <MessageSquare className="h-3 w-3 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-medium">Comment: </span>
+                              <span className="italic text-xs break-words">"{event.comment}"</span>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -757,21 +778,21 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                   </div>
                                 )}
                                 {(action.details.discrepancies?.damaged_on_arrival ?? 0) > 0 && (
-                                  <div className="flex items-center text-xs text-red-600">
-                                    <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Damaged on arrival: {action.details.discrepancies?.damaged_on_arrival}</span>
+                                  <div className="flex items-start text-xs text-red-600">
+                                    <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="font-medium break-words">Damaged on arrival: {action.details.discrepancies?.damaged_on_arrival}</span>
                                   </div>
                                 )}
                                 {(action.details.discrepancies?.missing ?? 0) > 0 && (
-                                  <div className="flex items-center text-xs text-yellow-600">
-                                    <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Missing on arrival: {action.details.discrepancies?.missing}</span>
+                                  <div className="flex items-start text-xs text-yellow-600">
+                                    <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="font-medium break-words">Missing on arrival: {action.details.discrepancies?.missing}</span>
                                   </div>
                                 )}
                                 {(action.details.discrepancies?.damaged_after_job ?? 0) > 0 && (
-                                  <div className="flex items-center text-xs text-orange-600">
-                                    <AlertTriangle className="h-3 w-3 mr-2" />
-                                    <span className="font-medium">Damage after job: {action.details.discrepancies?.damaged_after_job}</span>
+                                  <div className="flex items-start text-xs text-orange-600">
+                                    <AlertTriangle className="h-3 w-3 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span className="font-medium break-words">Damage after job: {action.details.discrepancies?.damaged_after_job}</span>
                                   </div>
                                 )}
                                 {action.details.transport && (
@@ -787,10 +808,12 @@ export default function VoucherWorkflowTracker({ voucherId }: VoucherWorkflowTra
                                   </div>
                                 )}
                                 {action.comment && (
-                                  <div className="flex items-center text-xs text-gray-700">
-                                    <MessageSquare className="h-3 w-3 mr-1 text-gray-500" />
-                                    <span className="text-xs">Comment: </span>
-                                    <span className="italic">"{action.comment}"</span>
+                                  <div className="flex items-start text-xs text-gray-700">
+                                    <MessageSquare className="h-3 w-3 mr-2 mt-0.5 text-gray-500 flex-shrink-0" />
+                                    <div className="min-w-0 flex-1">
+                                      <span className="text-xs font-medium">Comment: </span>
+                                      <span className="italic break-words">"{action.comment}"</span>
+                                    </div>
                                   </div>
                                 )}
                               </div>

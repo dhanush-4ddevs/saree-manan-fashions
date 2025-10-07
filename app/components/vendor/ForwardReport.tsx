@@ -1802,7 +1802,16 @@ export default function ForwardReport() {
                         <div className="flex items-start justify-between">
                           <div className="min-w-0 pr-3">
                             <div className="flex items-center flex-wrap gap-2">
-                              <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">Voucher: #{voucher.voucher_no || 'N/A'}</span>
+                              <button
+                                onClick={() => {
+                                  // Navigate to voucher details or open modal
+                                  window.open(`/admin-dashboard?voucherId=${voucher.id}&viewMode=details`, '_blank');
+                                }}
+                                className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded hover:bg-indigo-100 hover:text-indigo-800 cursor-pointer transition-colors"
+                                title="Click to view voucher details"
+                              >
+                                Voucher: #{voucher.voucher_no || 'N/A'}
+                              </button>
                               <span className="text-sm sm:text-base font-semibold text-gray-800 truncate break-words">Item: {voucher.item_details?.item_name || 'N/A'}</span>
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2 text-[11px] sm:text-xs">
