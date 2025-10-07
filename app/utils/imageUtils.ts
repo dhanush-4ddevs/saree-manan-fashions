@@ -56,13 +56,23 @@ export const addWatermarkToImage = (
       ctx!.strokeStyle = 'rgba(0, 0, 0, 0.8)';
       ctx!.lineWidth = Math.max(1, fontSize / 20); // Proportional line width
 
-      // Position watermark horizontally centered in the image
+      // Position watermarks at three locations: upper center, center, and lower center
       const x = canvas.width / 2;
-      const y = canvas.height / 2;
+      const upperY = canvas.height * 0.25; // Upper center (25% from top)
+      const centerY = canvas.height / 2; // Center
+      const lowerY = canvas.height * 0.75; // Lower center (75% from top)
 
-      // Draw watermark with stroke and fill at the center
-      ctx!.strokeText(watermarkText, x, y);
-      ctx!.fillText(watermarkText, x, y);
+      // Draw watermark with stroke and fill at upper center
+      ctx!.strokeText(watermarkText, x, upperY);
+      ctx!.fillText(watermarkText, x, upperY);
+
+      // Draw watermark with stroke and fill at center
+      ctx!.strokeText(watermarkText, x, centerY);
+      ctx!.fillText(watermarkText, x, centerY);
+
+      // Draw watermark with stroke and fill at lower center
+      ctx!.strokeText(watermarkText, x, lowerY);
+      ctx!.fillText(watermarkText, x, lowerY);
 
       // Convert to data URL
       resolve(canvas.toDataURL('image/jpeg', 0.9));
