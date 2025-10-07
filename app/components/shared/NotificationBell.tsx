@@ -264,7 +264,7 @@ export function NotificationBell({ userId, iconColor = 'text-white' }: Notificat
             minute: '2-digit',
             hour12: true
           };
-          return date.toLocaleString('en-US', options);
+          return date.toLocaleString('en-GB', options);
         }
       }
 

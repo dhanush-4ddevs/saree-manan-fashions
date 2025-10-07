@@ -10,7 +10,7 @@ export const formatDate = (date: string | Date | any): string => {
     const toDate: Date = date && typeof date.toDate === 'function' ? date.toDate() : (typeof date === 'string' ? new Date(date) : (date instanceof Date ? date : new Date()));
 
     // Use Intl parts to ensure IST timezone and build dd-MMM-yyyy with hyphens
-    const parts = new Intl.DateTimeFormat('en-US', {
+    const parts = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Asia/Kolkata',
       day: '2-digit',
       month: 'short',
@@ -35,7 +35,7 @@ export const formatDate = (date: string | Date | any): string => {
  * @returns Formatted current time string
  */
 export const getCurrentISTTime = (): string => {
-  return new Date().toLocaleString('en-US', {
+  return new Date().toLocaleString('en-GB', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

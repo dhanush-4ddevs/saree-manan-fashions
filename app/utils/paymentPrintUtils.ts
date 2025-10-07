@@ -13,7 +13,7 @@ const formatCurrencyForPDF = (amount: number): string => {
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   const day = date.getDate().toString().padStart(2, '0');
-  const month = date.toLocaleDateString('en-US', { month: 'short' });
+  const month = date.toLocaleDateString('en-GB', { month: 'short' });
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 };

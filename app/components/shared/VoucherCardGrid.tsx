@@ -216,11 +216,10 @@ export function VoucherCardGrid({ vouchers, onView, onPrint, onTrack, onEdit }: 
             <button
               onClick={handleSearch}
               disabled={!!dateError}
-              className={`absolute right-1 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs rounded transition-colors ${
-                dateError
+              className={`absolute right-1 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs rounded transition-colors ${dateError
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   : 'text-white bg-blue-600 hover:bg-blue-700'
-              }`}
+                }`}
             >
               Search
             </button>
@@ -299,11 +298,10 @@ export function VoucherCardGrid({ vouchers, onView, onPrint, onTrack, onEdit }: 
             <button
               onClick={handleSearch}
               disabled={!!dateError}
-              className={`flex items-center gap-1 px-3 py-1 text-xs rounded transition-colors ${
-                dateError
+              className={`flex items-center gap-1 px-3 py-1 text-xs rounded transition-colors ${dateError
                   ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
                   : 'text-white bg-blue-600 hover:bg-blue-700'
-              }`}
+                }`}
             >
               <Search className="h-3 w-3" />
               Search
@@ -334,10 +332,10 @@ export function VoucherCardGrid({ vouchers, onView, onPrint, onTrack, onEdit }: 
               <span className="bg-green-100 px-2 py-1 rounded">Search: "{appliedSearchTerm}"</span>
             )}
             {appliedStartDate && (
-              <span className="bg-green-100 px-2 py-1 rounded">From: {new Date(appliedStartDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span className="bg-green-100 px-2 py-1 rounded">From: {new Date(appliedStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             )}
             {appliedEndDate && (
-              <span className="bg-green-100 px-2 py-1 rounded">To: {new Date(appliedEndDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span className="bg-green-100 px-2 py-1 rounded">To: {new Date(appliedEndDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
             )}
             {appliedStatusFilter && (
               <span className="bg-green-100 px-2 py-1 rounded">Status: {appliedStatusFilter}</span>

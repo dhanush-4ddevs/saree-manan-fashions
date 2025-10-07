@@ -147,7 +147,7 @@ export default function TodayVouchers() {
               <h2 className="text-lg font-semibold text-blue-800">TODAY'S VOUCHERS</h2>
             </div>
             <p className="text-blue-600 text-xs">
-              {new Date().toLocaleDateString('en-US', {
+              {new Date().toLocaleDateString('en-GB', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',

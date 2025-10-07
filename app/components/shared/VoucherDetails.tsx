@@ -277,7 +277,7 @@ export default function VoucherDetails({ voucher, onClose, refreshKey }: Voucher
                   {(() => {
                     const date = new Date(voucher.created_at);
                     const day = String(date.getDate()).padStart(2, '0');
-                    const month = date.toLocaleString('en-US', { month: 'short' });
+                    const month = date.toLocaleString('en-GB', { month: 'short' });
                     const year = date.getFullYear();
                     return `${day}-${month}-${year}`;
                   })()}

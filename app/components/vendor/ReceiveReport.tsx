@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, List, Grid3X3 } from 'lucide-react';
+import { FileText, Save, AlertTriangle, X, Search, Filter, SortAsc, SortDesc, RotateCcw, ArrowUpDown, List, Grid3X3, Calendar, Package, Truck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { db } from '../../lib/firebase';
-import { collection, query, where, getDocs, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { getCurrentUser } from '../../config/firebase';
 import { Voucher, VoucherEvent, generateEventId } from '../../types/voucher';
 import { ImageContainer } from '../shared/ImageContainer';
@@ -45,6 +45,9 @@ export default function ReceiveReport() {
   const [alreadyReceivedVouchers, setAlreadyReceivedVouchers] = useState<ReceiveItem[]>([]);
   const [filteredVouchers, setFilteredVouchers] = useState<ReceiveItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
+  const [selectedReceiveItem, setSelectedReceiveItem] = useState<ReceiveItem | null>(null);
   const [editingVoucherId, setEditingVoucherId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{ [key: string]: any }>({});
   const [saving, setSaving] = useState(false);
@@ -589,6 +592,43 @@ export default function ReceiveReport() {
     });
   };
 
+  const openVoucherDetails = async (voucherId: string, rowId: string) => {
+    try {
+      setDetailsLoading(true);
+      const voucherRef = doc(db, 'vouchers', voucherId);
+      const snap = await getDoc(voucherRef);
+      if (!snap.exists()) return;
+      const data = snap.data() as Voucher;
+      // Ensure id is present and fallback for created_at if missing
+      const withId: Voucher = {
+        ...(data as any),
+        id: voucherId,
+        created_at: (data as any).created_at || ((data as any).createdAt && (data as any).createdAt.toDate ? (data as any).createdAt.toDate().toISOString() : (data as any).createdAt) || new Date().toISOString()
+      };
+      setSelectedVoucher(withId);
+      // capture selected row context
+      const row = (vouchers.find(v => v.id === rowId) || alreadyReceivedVouchers.find(v => v.id === rowId)) || null;
+      if (row) {
+        setSelectedReceiveItem(row);
+        setFormData(prev => (
+          prev[row.id]
+            ? prev
+            : {
+              ...prev,
+              [row.id]: {
+                missing: row.missing || 0,
+                damagedOnArrival: row.damagedOnArrival || 0,
+                damageReason: row.damageReason || '',
+                receiverComment: row.receiverComment || ''
+              }
+            }
+        ));
+      }
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md border border-blue-100 p-0">
       <div className="p-4 bg-blue-600 text-white rounded-t-lg mb-4 flex items-center justify-between">
@@ -760,7 +800,15 @@ export default function ReceiveReport() {
                               {index + 1}
                             </td>
                             <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
-                            <td className="border p-2">{highlightSearchTerm(item.voucherNo, searchTerm)}</td>
+                            <td className="border p-2">
+                              <button
+                                onClick={() => openVoucherDetails(item.voucherId, item.id)}
+                                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                title="Click to view voucher details"
+                              >
+                                {highlightSearchTerm(item.voucherNo, searchTerm)}
+                              </button>
+                            </td>
                             <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
                               day: '2-digit',
                               month: 'short',
@@ -1152,7 +1200,15 @@ export default function ReceiveReport() {
                                 {index + 1}
                               </td>
                               <td className="border p-2">{item.imageUrl ? <ImageContainer images={[item.imageUrl]} size="sm" /> : <FileText />}</td>
-                              <td className="border p-2">{item.voucherNo}</td>
+                              <td className="border p-2">
+                                <button
+                                  onClick={() => openVoucherDetails(item.voucherId, item.id)}
+                                  className="text-green-700 hover:text-green-900 hover:underline font-medium"
+                                  title="Click to view voucher details"
+                                >
+                                  {item.voucherNo}
+                                </button>
+                              </td>
                               <td className="border p-2">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString('en-GB', {
                                 day: '2-digit',
                                 month: 'short',
@@ -1231,6 +1287,202 @@ export default function ReceiveReport() {
             </div>
           )}
         </>
+      )}
+      {/* Inline Voucher Modal */}
+      {selectedVoucher && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* Header (match AllVouchers modal) */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 rounded-t-lg flex-shrink-0">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg lg:text-xl font-bold flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Voucher #{selectedVoucher.voucher_no}
+                  </h2>
+                  <div className="flex items-center mt-1 space-x-3">
+                    <span className="flex items-center text-blue-100 text-sm">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      {(() => {
+                        const date = new Date(selectedVoucher.created_at);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = date.toLocaleString('en-GB', { month: 'short' });
+                        const year = date.getFullYear();
+                        return isNaN(date.getTime()) ? selectedVoucher.created_at : `${day}-${month}-${year}`;
+                      })()}
+                    </span>
+                    <span className={`px-2 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full ${selectedVoucher.voucher_status?.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' :
+                      selectedVoucher.voucher_status?.toLowerCase() === 'dispatched' ? 'bg-yellow-100 text-yellow-800' :
+                        selectedVoucher.voucher_status?.toLowerCase() === 'received' ? 'bg-blue-100 text-blue-800' :
+                          selectedVoucher.voucher_status?.toLowerCase() === 'forwarded' ? 'bg-orange-100 text-orange-800' :
+                            selectedVoucher.voucher_status?.toLowerCase() === 'partially_received' ? 'bg-purple-100 text-purple-800' :
+                              'bg-gray-100 text-gray-800'
+                      }`}>
+                      {selectedVoucher.voucher_status}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedVoucher(null)}
+                  className="text-blue-100 hover:text-white text-xl font-bold"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {detailsLoading ? (
+                <div className="flex items-center justify-center py-10 text-blue-600">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                  Loading voucher details...
+                </div>
+              ) : (
+                selectedReceiveItem && (
+                  <>
+                    {/* Voucher Summary - Read-only */}
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+                      <h3 className="text-sm font-semibold text-blue-800 mb-3 flex items-center">
+                        <Package className="h-4 w-4 mr-2" />
+                        Voucher Information
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Voucher No</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.voucherNo}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Date</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.voucherDate ? new Date(selectedReceiveItem.voucherDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Item</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.item}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Job Work</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.jobWork}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Transport</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.transportName || 'Not provided '}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">LR No</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.lrNumber || 'Not provided'}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">LR Date</div>
+                          <div className="font-semibold text-gray-900">{selectedReceiveItem.lrDate ? new Date(selectedReceiveItem.lrDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not provided'}</div>
+                        </div>
+                        <div className="bg-white p-2 rounded shadow-sm">
+                          <div className="text-[10px] text-gray-500 uppercase">Sender</div>
+                          <div className="font-semibold text-gray-900 text-xs">{selectedReceiveItem.senderName}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Receive Form - Editable */}
+                    {(() => {
+                      const id = selectedReceiveItem.id;
+                      const currentData = formData[id] || {};
+                      const missingQty = Number(currentData.missing ?? selectedReceiveItem.missing ?? 0);
+                      const damagedQty = Number(currentData.damagedOnArrival ?? selectedReceiveItem.damagedOnArrival ?? 0);
+                      const receivedQty = (selectedReceiveItem.quantityExpected || 0) - missingQty;
+                      const netQty = receivedQty - damagedQty;
+                      return (
+                        <div className="bg-white border border-green-200 rounded-lg p-4">
+                          <h3 className="text-sm font-semibold text-green-800 mb-3 flex items-center">
+                            <Package className="h-4 w-4 mr-2" />
+                            Receive Details
+                          </h3>
+
+                          {/* Quantity Summary */}
+                          <div className="grid grid-cols-3 gap-3 mb-4">
+                            <div className="p-3 bg-blue-50 border border-blue-300 rounded-lg text-center">
+                              <div className="text-xs text-blue-700 font-medium">Expected Qty</div>
+                              <div className="text-xl font-bold text-blue-900">{selectedReceiveItem.quantityExpected}</div>
+                            </div>
+                            <div className="p-3 bg-green-50 border border-green-300 rounded-lg text-center">
+                              <div className="text-xs text-green-700 font-medium">Net Received</div>
+                              <div className="text-xl font-bold text-green-900">{netQty}</div>
+                            </div>
+
+                          </div>
+
+                          {/* Input Fields */}
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Missing Quantity
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={selectedReceiveItem.quantityExpected}
+                                  value={currentData.missing ?? selectedReceiveItem.missing ?? 0}
+                                  onChange={e => handleInputChange(id, 'missing', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Damaged on Arrival
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={currentData.damagedOnArrival ?? selectedReceiveItem.damagedOnArrival ?? 0}
+                                  onChange={e => handleInputChange(id, 'damagedOnArrival', e.target.value)}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Damage Reason
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={currentData.damageReason ?? selectedReceiveItem.damageReason ?? ''}
+                                onChange={e => handleInputChange(id, 'damageReason', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                placeholder="Describe any damage..."
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Receiver Comment
+                              </label>
+                              <textarea
+                                rows={2}
+                                value={currentData.receiverComment ?? selectedReceiveItem.receiverComment ?? ''}
+                                onChange={e => handleInputChange(id, 'receiverComment', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                placeholder="Add any comments..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )
+              )}
+            </div>
+            <div className="p-4 bg-gray-50 rounded-b-lg flex justify-end gap-2 border-t border-blue-100">
+              <button onClick={() => setSelectedVoucher(null)} className="px-4 py-2 rounded-md text-sm text-blue-700 bg-white border border-blue-200 hover:bg-blue-50">Close</button>
+              {selectedReceiveItem && (
+                <button onClick={() => handleSave(selectedReceiveItem.id)} disabled={saving} className="px-4 py-2 rounded-md text-sm text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400">
+                  {saving ? 'Saving...' : 'Receive'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

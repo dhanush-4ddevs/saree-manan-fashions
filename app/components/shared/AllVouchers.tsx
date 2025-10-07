@@ -1079,7 +1079,7 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
                             const dateObj = new Date(lrDate);
                             if (isNaN(dateObj.getTime())) return 'N/A';
                             const day = dateObj.getDate().toString().padStart(2, '0');
-                            const month = dateObj.toLocaleString('en-US', { month: 'short' });
+                            const month = dateObj.toLocaleString('en-GB', { month: 'short' });
                             const year = dateObj.getFullYear();
                             return `${day} ${month} ${year}`;
                           })()}

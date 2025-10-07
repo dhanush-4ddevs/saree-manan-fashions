@@ -220,7 +220,7 @@ export function PrintPreviewModal({ voucher, isOpen, onClose }: PrintPreviewModa
                             <div className="min-w-0 flex-1">
                                 <p className="text-xs text-gray-500 font-medium">Created</p>
                                 <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
-                                    {voucher?.created_at ? new Date(voucher.created_at).toLocaleDateString('en-US', {
+                                    {voucher?.created_at ? new Date(voucher.created_at).toLocaleDateString('en-GB', {
                                         year: 'numeric',
                                         month: 'short',
                                         day: 'numeric'
