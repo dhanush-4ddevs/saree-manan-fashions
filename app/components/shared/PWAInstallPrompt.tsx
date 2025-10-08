@@ -7,15 +7,33 @@ type BeforeInstallPromptEvent = Event & {
     userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+const DISMISSAL_STORAGE_KEY = 'pwa-install-dismissed';
+const DISMISSAL_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+
 export default function PWAInstallPrompt() {
     const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
     const [show, setShow] = useState(false);
+
+    // Check if prompt was dismissed within the last 3 hours
+    const isDismissedRecently = () => {
+        if (typeof window === 'undefined') return false;
+        const dismissedAt = localStorage.getItem(DISMISSAL_STORAGE_KEY);
+        if (!dismissedAt) return false;
+
+        const dismissalTime = parseInt(dismissedAt, 10);
+        const now = Date.now();
+        return (now - dismissalTime) < DISMISSAL_DURATION;
+    };
 
     useEffect(() => {
         const onBeforeInstall = (e: Event) => {
             e.preventDefault();
             deferredPromptRef.current = e as BeforeInstallPromptEvent;
-            setShow(true);
+
+            // Only show if not dismissed recently
+            if (!isDismissedRecently()) {
+                setShow(true);
+            }
         };
 
         window.addEventListener("beforeinstallprompt", onBeforeInstall as EventListener);
@@ -63,7 +81,13 @@ export default function PWAInstallPrompt() {
         }
     };
 
-    const onClose = () => setShow(false);
+    const onClose = () => {
+        // Store the dismissal timestamp in localStorage
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(DISMISSAL_STORAGE_KEY, Date.now().toString());
+        }
+        setShow(false);
+    };
 
     if (!show) return null;
 
