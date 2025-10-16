@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { VoucherCardGrid } from './VoucherCardGrid';
 import { Voucher } from '@/types/voucher';
 import { db } from '@/config/firebase';
-import { collection, getDocs, query, orderBy, Timestamp, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, Timestamp, deleteDoc, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import VoucherWorkflowTracker from './VoucherWorkflowTracker';
 import VoucherDetails from './VoucherDetails';
 import { formatIndianQuantity } from '@/lib/format';
@@ -406,7 +406,81 @@ export default function AllVouchers({ onCreateVoucher, hideHeading = false }: Al
   };
 
   useEffect(() => {
-    fetchAllVouchers();
+    // Set up realtime listener for vouchers
+    const vouchersCollection = collection(db, 'vouchers');
+    const vouchersQuery = query(vouchersCollection, orderBy('createdAt', 'desc'));
+
+    setLoading(true);
+
+    const unsubscribe = onSnapshot(vouchersQuery, async (snapshot) => {
+      const vouchersList = await Promise.all(snapshot.docs.map(async (docSnapshot) => {
+        const data = docSnapshot.data() as Omit<Voucher, 'id'>;
+
+        let vendorName = 'N/A';
+        let userCode = 'N/A';
+        let vendorJobWork = 'N/A';
+        let companyName = 'N/A';
+        let createdByName = 'N/A';
+        let createdByCode = 'N/A';
+
+        // Fetch creator information
+        if (data.created_by_user_id) {
+          try {
+            const creatorDoc = await getDoc(doc(db, 'users', data.created_by_user_id));
+            if (creatorDoc.exists()) {
+              const creatorData = creatorDoc.data() as { firstName?: string, surname?: string, userCode?: string };
+              createdByName = creatorData.firstName && creatorData.surname
+                ? `${creatorData.firstName} ${creatorData.surname}`.trim()
+                : creatorData.firstName || creatorData.surname || 'N/A';
+              createdByCode = creatorData.userCode || 'N/A';
+            }
+          } catch (error) {
+            console.error(`Error fetching creator details for user ID: ${data.created_by_user_id}`, error);
+          }
+        }
+
+        const dispatchEvent = data.events.find(e => e.event_type === 'dispatch');
+        if (dispatchEvent && dispatchEvent.details.receiver_id) {
+          try {
+            const vendorDoc = await getDoc(doc(db, 'users', dispatchEvent.details.receiver_id));
+            if (vendorDoc.exists()) {
+              const vendorData = vendorDoc.data() as { companyName?: string, firstName?: string, surname?: string, userCode?: string, vendorJobWork?: string };
+              // Set vendor name as personal name (firstName + surname)
+              vendorName = vendorData.firstName && vendorData.surname
+                ? `${vendorData.firstName} ${vendorData.surname}`.trim()
+                : vendorData.firstName || vendorData.surname || 'N/A';
+              // Set company name separately
+              companyName = vendorData.companyName || 'N/A';
+              userCode = vendorData.userCode ?? 'N/A';
+              vendorJobWork = vendorData.vendorJobWork ?? (dispatchEvent.details.jobWork || 'N/A');
+            }
+          } catch (error) {
+            console.error(`Error fetching vendor details for receiver ID: ${dispatchEvent.details.receiver_id}`, error);
+          }
+        }
+
+        return {
+          ...data,
+          id: docSnapshot.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt,
+          vendorName: vendorName,
+          userCode: userCode,
+          vendorJobWork: vendorJobWork,
+          companyName: companyName,
+          createdByName: createdByName,
+          createdByCode: createdByCode,
+        } as Voucher & { vendorName: string, userCode: string, vendorJobWork: string, companyName: string, createdByName: string, createdByCode: string };
+      }));
+
+      setVouchers(vouchersList);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching vouchers:', error);
+      setLoading(false);
+    });
+
+    // Cleanup function to unsubscribe from the listener
+    return () => unsubscribe();
   }, []);
 
   const fetchAllVouchers = async () => {
