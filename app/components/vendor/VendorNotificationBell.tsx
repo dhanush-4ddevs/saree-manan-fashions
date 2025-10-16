@@ -269,16 +269,31 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
     }
   });
 
-  // Group notifications by voucherNo
-  const groupedNotifications = notifications.reduce((acc, notification) => {
+  // Split notifications into payment and non-payment
+  const paymentNotifications = notifications.filter(n => n.type === 'payment');
+  const nonPaymentNotifications = notifications.filter(n => n.type !== 'payment');
+
+  // Group only non-payment notifications by voucherNo
+  const groupedNonPaymentNotifications = nonPaymentNotifications.reduce((acc, notification) => {
     const key = notification.voucherNo || 'other';
     if (!acc[key]) acc[key] = [];
     acc[key].push(notification);
     return acc;
   }, {} as Record<string, Notification[]>);
 
-  // Sort groups by most recent notification in each group
-  const sortedGroups = Object.entries(groupedNotifications).sort((a, b) => {
+  // Convert payment notifications to individual groups (each payment is its own group)
+  const paymentGroups = paymentNotifications.map(notification => {
+    return [`payment-${notification.id}`, [notification]] as [string, Notification[]];
+  });
+
+  // Combine payment groups and non-payment groups
+  const allGroups = [
+    ...paymentGroups,
+    ...Object.entries(groupedNonPaymentNotifications)
+  ];
+
+  // Sort all groups by most recent notification in each group
+  const sortedGroups = allGroups.sort((a, b) => {
     const aLatest = a[1][0]?.createdAt?.toDate?.() || new Date(a[1][0]?.createdAt?.seconds * 1000) || new Date(a[1][0]?.createdAt);
     const bLatest = b[1][0]?.createdAt?.toDate?.() || new Date(b[1][0]?.createdAt?.seconds * 1000) || new Date(b[1][0]?.createdAt);
     return bLatest.getTime() - aLatest.getTime();
@@ -318,10 +333,10 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
                 {notifications.length > 0 && (
                   <button
                     onClick={deleteAllNotifications}
-                    className="text-xs flex items-center bg-blue-500 hover:bg-blue-400 px-2 py-1 rounded transition-colors"
+                    className="text-xs flex items-center bg-red-500 hover:bg-red-400 px-2 py-1 rounded transition-colors"
                     title="Mark all as read"
                   >
-                    <Check className="h-3 w-3 mr-1" />
+                    <Trash2 className="h-3 w-3 mr-1" />
                     Clear all
                   </button>
                 )}
@@ -346,9 +361,11 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
                           <div className="flex-1">
                             <h3 className="font-medium text-blue-800">{latest.title}</h3>
                             <p className="text-sm text-gray-600">{latest.message}</p>
-                            <div className="mt-1 text-xs text-blue-600">
-                              Voucher: {voucherNo} {(group as Notification[]).length > 1 && <span className="ml-2 text-xs text-gray-500">({(group as Notification[]).length} updates)</span>}
-                            </div>
+                            {latest.voucherNo && (
+                              <div className="mt-1 text-xs text-blue-600">
+                                Voucher: {latest.voucherNo} {(group as Notification[]).length > 1 && latest.type !== 'payment' && <span className="ml-2 text-xs text-gray-500">({(group as Notification[]).length} updates)</span>}
+                              </div>
+                            )}
                             <p className="text-xs text-gray-500 mt-1">
                               {formatDate(latest.createdAt)}
                             </p>
@@ -356,7 +373,7 @@ export function VendorNotificationBell({ vendorUserId, iconColor = 'text-white' 
                           <button
                             onClick={e => deleteNotification(latest.id, e)}
                             className="delete-button ml-2 p-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                            title="Delete notification group"
+                            title={latest.type === 'payment' ? "Delete payment notification" : "Delete notification group"}
                             disabled={deletingNotifications.has(latest.id)}
                           >
                             <Check className="h-4 w-4" />

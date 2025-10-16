@@ -366,6 +366,7 @@ export const notificationService = {
 
   /**
    * Send payment notification to vendor
+   * Each payment notification is unique and should NOT be grouped/overwritten
    */
   async sendPaymentNotification({
     vendorUserId,
@@ -380,6 +381,8 @@ export const notificationService = {
     voucherId: string;
     workDescription?: string;
   }) {
+    // Add unique timestamp to ensure each payment notification is distinct
+    const paymentTimestamp = Date.now();
     await this.createVendorNotification({
       vendorUserId,
       title: 'Payment Processed',
@@ -387,7 +390,10 @@ export const notificationService = {
       voucherNo,
       voucherId,
       type: 'payment',
-      extra: { amountPaid: paymentAmount }
+      extra: { 
+        amountPaid: paymentAmount,
+        paymentTimestamp // Unique identifier for each payment
+      }
     });
   },
 
