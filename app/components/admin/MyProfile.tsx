@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, ArrowLeft, Upload, Download, Printer, Save, FileText, CreditCard, IndianRupee, Package, Database, Settings, Trash2, Shield, AlertTriangle } from 'lucide-react';
+import { User, ArrowLeft, Upload, Download, Printer, Save, FileText, CreditCard, IndianRupee, Package, Database, Settings, Trash2, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { getCurrentUser } from '@/config/firebase';
 import { doc, updateDoc, collection, query, where, getDocs, orderBy, deleteDoc, getDoc } from 'firebase/firestore';
 import { db, storage } from '@/config/firebase';
@@ -177,6 +177,18 @@ export default function MyProfile() {
     loadUserData();
   }, []);
 
+  const handleRefreshAccount = async () => {
+    try {
+      if (!userData?.uid) return;
+      await Promise.all([
+        loadPaymentHistory(userData.uid),
+        loadAllTransactions(userData.uid)
+      ]);
+    } catch (err) {
+      console.error('Error refreshing account data:', err);
+    }
+  };
+
   // Load payment history for the vendor
   const loadPaymentHistory = async (vendorId: string) => {
     try {
@@ -237,27 +249,9 @@ export default function MyProfile() {
         const legacyKey = `${payment.voucherId}_${payment.vendorId}_${payment.jobWorkDone}`;
         paymentsMap[legacyKey] = (paymentsMap[legacyKey] || 0) + (payment.amountPaid || 0);
         console.log('Payment record:', { eventKey, legacyKey, amountPaid: payment.amountPaid, voucherId: payment.voucherId, jobWorkDone: payment.jobWorkDone });
-
-        transactions.push({
-          id: doc.id,
-          voucherId: payment.voucherId,
-          voucherNo: payment.voucherNo,
-          itemName: '', // Will be filled from voucher data if needed
-          jobWorkDone: payment.jobWorkDone,
-          quantity: payment.netQty,
-          pricePerPiece: payment.pricePerPiece,
-          totalAmount: payment.totalAmount,
-          amountPaid: payment.amountPaid,
-          pendingAmount: payment.totalAmount - payment.amountPaid,
-          status: payment.amountPaid >= payment.totalAmount ? 'Paid' : 'Partially Paid',
-          actionDate: payment.paymentDate?.toDate?.()?.toISOString()?.split('T')[0] ||
-            (typeof payment.paymentDate === 'string' ? payment.paymentDate.split('T')[0] :
-              new Date().toISOString().split('T')[0]),
-          paymentDate: payment.paymentDate?.toDate?.()?.toISOString()?.split('T')[0] ||
-            (typeof payment.paymentDate === 'string' ? payment.paymentDate.split('T')[0] :
-              new Date().toISOString().split('T')[0]),
-          type: 'payment'
-        });
+        // Do not push individual payment docs as separate transactions; we'll show
+        // a single transaction per forward event with aggregated paid amount to
+        // avoid duplicates in vendor view.
       });
 
       // Get voucher events for pending/unpaid work
@@ -1899,30 +1893,44 @@ export default function MyProfile() {
                   My Account
                 </h2>
 
-                {/* Payment Summary Card */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 sm:p-8 rounded-xl border border-blue-200 mb-8">
-                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center pt-4 pl-2">
-                    <IndianRupee className="h-5 w-5 mr-2" />
-                    Payment Summary
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-green-200">
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center mb-4">
-                          <IndianRupee className="h-8 w-8 text-green-600" />
+                {/* Payment Summary Card (compact with refresh) */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 sm:p-4 rounded-xl border border-blue-200 mb-6">
+                  <div className="flex items-center justify-between pt-3 px-2">
+                    <h3 className="text-lg font-bold text-blue-800 flex items-center">
+                      <IndianRupee className="h-4 w-4 mr-2" />
+                      Payment Summary
+                    </h3>
+                    <button
+                      onClick={handleRefreshAccount}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-md border border-blue-300 bg-white text-blue-700 hover:bg-blue-50"
+                      title="Refresh payments"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Refresh
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-2">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-green-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
+                          <IndianRupee className="h-6 w-6 text-green-600" />
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 font-medium">Total Payments Received</p>
-                        <p className="text-3xl font-bold text-green-600">₹{totalPaid.toLocaleString('en-IN')}</p>
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium">Total Payments Received</p>
+                          <p className="text-2xl font-bold text-green-600 leading-tight">₹{totalPaid.toLocaleString('en-IN')}</p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-red-200">
-                      <div className="flex flex-col items-center">
-                        <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mb-4">
-                          <CreditCard className="h-8 w-8 text-red-600" />
+                    <div className="bg-white p-4 rounded-lg shadow-sm border border-red-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center">
+                          <CreditCard className="h-6 w-6 text-red-600" />
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 font-medium">Pending Payments</p>
-                        <p className="text-3xl font-bold text-red-600">₹{pendingPayments.toLocaleString('en-IN')}</p>
+                        <div>
+                          <p className="text-xs text-gray-600 font-medium">Pending Payments</p>
+                          <p className="text-2xl font-bold text-red-600 leading-tight">₹{pendingPayments.toLocaleString('en-IN')}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1930,10 +1938,12 @@ export default function MyProfile() {
 
                 {/* All Transactions Section */}
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-1 sm:p-8 rounded-xl border border-blue-200">
-                  <h3 className="text-xl font-bold text-blue-800 mb-6 flex items-center pt-4 pl-2">
-                    <Package className="h-5 w-5 mr-2" />
-                    All Transactions
-                  </h3>
+                  <div className="flex items-center justify-between pt-4 pl-2 mb-6">
+                    <h3 className="text-lg font-bold text-blue-800 flex items-center">
+                      <Package className="h-5 w-5 mr-2" />
+                      All Transactions
+                    </h3>
+                  </div>
 
                   {/* Filter and Sort Controls */}
                   <div className="mb-6 flex flex-wrap gap-4 items-center bg-white p-4 rounded-lg border border-blue-200 shadow-sm">
