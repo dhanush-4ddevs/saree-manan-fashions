@@ -279,11 +279,14 @@ export function NotificationBell({ userId, iconColor = 'text-white' }: Notificat
 
   // Get notification icon based on type
   const getNotificationIcon = (notification: Notification) => {
-    if (notification.type === 'payment') {
+    // Handle both type and eventType fields (admin notifications use eventType)
+    const notificationType = notification.type || notification.eventType;
+
+    if (notificationType === 'payment') {
       return <CreditCard className="h-5 w-5 text-green-600" />;
-    } else if (notification.type === 'completion_request') {
+    } else if (notificationType === 'completion_request') {
       return <ClipboardCheck className="h-5 w-5 text-orange-500" />;
-    } else if (notification.type === 'voucher_received') {
+    } else if (notificationType === 'voucher_received' || notificationType === 'receive') {
       return <Check className="h-5 w-5 text-blue-600" />;
     } else {
       return <Bell className="h-5 w-5 text-blue-600" />;
@@ -306,21 +309,6 @@ export function NotificationBell({ userId, iconColor = 'text-white' }: Notificat
       console.error("Error comparing dates:", e);
       return 0;
     }
-  });
-
-  // Group notifications by voucherNo
-  const groupedNotifications = notifications.reduce((acc, notification) => {
-    const key = notification.voucherNo || 'other';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(notification);
-    return acc;
-  }, {} as Record<string, Notification[]>);
-
-  // Sort groups by most recent notification in each group
-  const sortedGroups = Object.entries(groupedNotifications).sort((a, b) => {
-    const aLatest = a[1][0]?.createdAt?.toDate?.() || new Date(a[1][0]?.createdAt?.seconds * 1000) || new Date(a[1][0]?.createdAt);
-    const bLatest = b[1][0]?.createdAt?.toDate?.() || new Date(b[1][0]?.createdAt?.seconds * 1000) || new Date(b[1][0]?.createdAt);
-    return bLatest.getTime() - aLatest.getTime();
   });
 
   return (
@@ -367,43 +355,42 @@ export function NotificationBell({ userId, iconColor = 'text-white' }: Notificat
               </div>
             </div>
             <div className="max-h-[70vh] sm:max-h-96 overflow-y-auto">
-              {sortedGroups.length > 0 ? (
+              {sortedNotifications.length > 0 ? (
                 <div className="divide-y divide-blue-100">
-                  {sortedGroups.map(([voucherNo, group]) => {
-                    const latest = group[0];
-                    return (
-                      <div
-                        key={voucherNo}
-                        onClick={e => handleNotificationClick(latest, e)}
-                        className={`p-4 cursor-pointer hover:bg-blue-50 transition-all duration-300 ${latest.read ? 'bg-white' : 'bg-blue-50'
-                          }`}
-                      >
-                        <div className="flex items-start">
-                          <div className="mr-3 mt-1">
-                            {getNotificationIcon(latest)}
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-blue-800">{latest.title}</h3>
-                            <p className="text-sm text-gray-600">{latest.message}</p>
-                            <div className="mt-1 text-xs text-blue-600">
-                              Voucher: {voucherNo} {group.length > 1 && <span className="ml-2 text-xs text-gray-500">({group.length} updates)</span>}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(latest.createdAt)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={e => deleteNotification(latest.id, e)}
-                            className="delete-button ml-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                            title="Delete notification group"
-                            disabled={deletingNotifications.has(latest.id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
+                  {sortedNotifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      onClick={e => handleNotificationClick(notification, e)}
+                      className={`p-4 cursor-pointer hover:bg-blue-50 transition-all duration-300 ${deletingNotifications.has(notification.id) ? 'opacity-0 transform translate-x-full' : ''
+                        } ${notification.read ? 'bg-white' : 'bg-blue-50'}`}
+                    >
+                      <div className="flex items-start">
+                        <div className="mr-3 mt-1">
+                          {getNotificationIcon(notification)}
                         </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium text-blue-800">{notification.title}</h3>
+                          <p className="text-sm text-gray-600">{notification.message}</p>
+                          {notification.voucherNo && (
+                            <div className="mt-1 text-xs text-blue-600">
+                              Voucher: {notification.voucherNo}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDate(notification.createdAt)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={e => deleteNotification(notification.id, e)}
+                          className="delete-button ml-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                          title="Delete notification"
+                          disabled={deletingNotifications.has(notification.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="p-4 text-center text-gray-500">No notifications</div>
