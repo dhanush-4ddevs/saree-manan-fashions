@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, doc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, where, getDoc } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Voucher } from '@/types/voucher';
 import { getCurrentUser } from '@/config/firebase';
@@ -22,6 +22,7 @@ export default function ManualCompletionTool({ voucherId }: ManualCompletionTool
   const [adminUid, setAdminUid] = useState<string | null>(null);
   const [bulkUpdateLoading, setBulkUpdateLoading] = useState(false);
   const [bulkUpdateProgress, setBulkUpdateProgress] = useState({ current: 0, total: 0 });
+  const [singleUpdateLoading, setSingleUpdateLoading] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -46,7 +47,28 @@ export default function ManualCompletionTool({ voucherId }: ManualCompletionTool
   }, [voucherId]);
 
   const fetchSpecificVoucher = async (id: string) => {
-    // Implementation for fetching specific voucher
+    try {
+      setLoading(true);
+      setError(null);
+
+      const voucherRef = doc(db, 'vouchers', id);
+      const snap = await getDoc(voucherRef);
+      if (!snap.exists()) {
+        setVouchers([]);
+        setSelectedVoucher(null);
+        setError('Voucher not found');
+        return;
+      }
+
+      const voucher = { ...snap.data(), id: snap.id } as Voucher;
+      setVouchers([voucher]);
+      setSelectedVoucher(voucher);
+    } catch (err) {
+      console.error('Error fetching voucher:', err);
+      setError('Failed to fetch voucher');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchVouchers = async () => {
@@ -91,6 +113,55 @@ export default function ManualCompletionTool({ voucherId }: ManualCompletionTool
 
   const handleManualComplete = async () => {
     // Implementation for manual completion
+  };
+
+  // New: Re-run status logic for the selected voucher only
+  const rerunStatusForSelectedVoucher = async () => {
+    if (!selectedVoucher) return;
+    try {
+      setSingleUpdateLoading(true);
+      setError(null);
+      setSuccess(null);
+
+      const events = selectedVoucher.events || [];
+      if (events.length === 0) {
+        setSuccess('No events to evaluate. Status unchanged.');
+        return;
+      }
+
+      const latestEvent = events[events.length - 1];
+      let newStatus = selectedVoucher.voucher_status;
+
+      if (latestEvent.event_type === 'dispatch') {
+        newStatus = determineNewStatus(selectedVoucher, 'dispatch');
+      } else if (latestEvent.event_type === 'receive') {
+        newStatus = determineNewStatus(selectedVoucher, 'receive', latestEvent);
+      } else if (latestEvent.event_type === 'forward') {
+        newStatus = determineNewStatus(selectedVoucher, 'forward', latestEvent);
+      }
+
+      if (newStatus !== selectedVoucher.voucher_status) {
+        const statusUpdate = updateVoucherStatus(selectedVoucher, newStatus);
+        await updateDoc(doc(db, 'vouchers', selectedVoucher.id!), {
+          ...statusUpdate,
+          updatedAt: new Date().toISOString()
+        });
+
+        setSuccess(`Voucher ${selectedVoucher.voucher_no} updated: ${selectedVoucher.voucher_status} → ${newStatus}`);
+
+        // Refresh the selected voucher
+        if (selectedVoucher.id) {
+          await fetchSpecificVoucher(selectedVoucher.id);
+        }
+      } else {
+        setSuccess('Status already up to date. No changes needed.');
+      }
+    } catch (err) {
+      console.error('Error updating voucher status:', err);
+      setError('Failed to update voucher status');
+    } finally {
+      setSingleUpdateLoading(false);
+    }
   };
 
   // New function to rerun status logic for all vouchers
@@ -285,12 +356,23 @@ export default function ManualCompletionTool({ voucherId }: ManualCompletionTool
               <span className="font-medium">Admin Received:</span> {selectedVoucher.admin_received_quantity}
             </div>
           </div>
-          <button
-            onClick={handleManualComplete}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Manually Complete This Voucher
-          </button>
+          <div className="mt-4 flex items-center space-x-3">
+            <button
+              onClick={rerunStatusForSelectedVoucher}
+              disabled={singleUpdateLoading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:bg-indigo-400 flex items-center"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {singleUpdateLoading ? 'Recomputing…' : 'Rerun Status Logic for This Voucher'}
+            </button>
+
+            <button
+              onClick={handleManualComplete}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Manually Complete This Voucher
+            </button>
+          </div>
         </div>
       )}
     </div>

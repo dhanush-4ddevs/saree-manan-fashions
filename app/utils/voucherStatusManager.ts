@@ -214,8 +214,16 @@ export function determineNewStatus(
     return currentStatus; // No transition possible
   }
 
-  // Check conditions for each transition
-  for (const transition of applicableTransitions) {
+  // Prioritize transitions with explicit conditions first so that
+  // admin completion logic (adminReceivedEnough) is evaluated before
+  // generic transitions like Received → Received.
+  const orderedTransitions = [
+    ...applicableTransitions.filter(t => !!t.conditions),
+    ...applicableTransitions.filter(t => !t.conditions)
+  ];
+
+  // Check conditions for each transition in priority order
+  for (const transition of orderedTransitions) {
     let conditionsMet = true;
 
     if (transition.conditions) {
