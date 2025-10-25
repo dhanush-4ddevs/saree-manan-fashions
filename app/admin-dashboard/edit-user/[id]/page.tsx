@@ -900,7 +900,7 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* User Category */}
                       <div>
-                        <label htmlFor="category" className="block text-sm font-medium text-blue-700 flex items-center">
+                        <label htmlFor="category" className="block text-sm font-medium text-blue-700 items-center">
                           <Users className="h-5 w-5 mr-2 text-blue-500" />
                           User Category
                         </label>
@@ -918,7 +918,7 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
 
                       {/* User Status */}
                       <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-blue-700 flex items-center">
+                        <label htmlFor="status" className="block text-sm font-medium text-blue-700 items-center">
                           <Users className="h-5 w-5 mr-2 text-blue-500" />
                           Status
                         </label>
@@ -937,7 +937,7 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
 
                     {/* User Code */}
                     <div>
-                      <label htmlFor="userCode" className="block text-sm font-medium text-blue-700 flex items-center">
+                      <label htmlFor="userCode" className="block text-sm font-medium text-blue-700 items-center">
                         <Hash className="h-5 w-5 mr-2 text-blue-500" />
                         User Code
                       </label>
