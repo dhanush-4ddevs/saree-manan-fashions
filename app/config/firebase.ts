@@ -47,7 +47,7 @@ if (process.env.NODE_ENV === 'development') {
   verifyStorageConfig();
 }
 
-const generateUserCode = (firstName: string, surname: string, phone: string, role: 'admin' | 'vendor' | 'master_admin'): string => {
+export const generateUserCode = (firstName: string, surname: string, phone: string, role: 'admin' | 'vendor' | 'master_admin'): string => {
   const prefix = role === 'admin' || role === 'master_admin' ? 'a' : 'v';
   const firstInitial = firstName?.charAt(0).toLowerCase() || '';
   const surnameInitial = surname?.charAt(0).toLowerCase() || '';

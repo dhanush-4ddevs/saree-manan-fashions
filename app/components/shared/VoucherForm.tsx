@@ -90,7 +90,7 @@ export function VoucherForm({ onSubmit, editingVoucher, initialVoucherNo, isSubm
     quantity: extractedData.quantity || 0,
     supplierName: extractedData.supplierName || '',
     supplierPrice: extractedData.supplierPrice || 0,
-    jobWork: extractedData.jobWork || 'Dying Chaap',
+    jobWork: extractedData.jobWork || '',
     vendorUserId: extractedData.vendorUserId || '',
     vendorFirstName: extractedData.vendorFirstName || '',
     vendorLastName: extractedData.vendorLastName || '',

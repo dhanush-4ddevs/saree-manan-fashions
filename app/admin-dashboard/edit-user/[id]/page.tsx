@@ -10,7 +10,7 @@ import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { useJobWorks } from '@/hooks/useJobWorks';
-import { updateJobWork, deleteJobWork, getCurrentUser, addJobWork } from '@/config/firebase';
+import { updateJobWork, deleteJobWork, getCurrentUser, addJobWork, generateUserCode } from '@/config/firebase';
 import {
   getAllStateNames,
   getDistrictsForState,
@@ -120,6 +120,29 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
   const [activeVendorJobWorkMenu, setActiveVendorJobWorkMenu] = useState<number | null>(null);
   const [isVendorJobWorkOperationInProgress, setIsVendorJobWorkOperationInProgress] = useState(false);
 
+  // Phone validation states
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+
+  // Phone validation functions
+  const validatePhoneNumber = (phone: string): string | null => {
+    if (!phone) return 'Phone number is required.';
+    if (!/^\d{10}$/.test(phone)) return 'Phone number must be exactly 10 digits.';
+    if (!/^[6-9]/.test(phone)) return 'Phone number must start with 6, 7, 8, or 9.';
+    return null;
+  };
+
+  const validatePhoneRealTime = (phone: string): string | null => {
+    if (!phone) return null; // Don't show error for empty field while typing
+    if (!/^\d+$/.test(phone)) return 'Only numbers are allowed.';
+    if (phone.length < 10) return `Enter ${10 - phone.length} more digit${10 - phone.length > 1 ? 's' : ''}.`;
+    if (!/^[6-9]/.test(phone)) return 'Phone number must start with 6, 7, 8, or 9.';
+    return null; // Valid
+  };
+
+  const isValidPhoneNumber = (phone: string): boolean => {
+    return /^[6-9]\d{9}$/.test(phone);
+  };
+
   // Sample pincode data for autocomplete (in real app, this would come from API)
   const samplePincodes = [
     '400001', '400002', '400003', '400004', '400005', '400006', '400007', '400008', '400009', '400010',
@@ -151,6 +174,27 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
     designation: '',
     vendorJobWork: ''
   });
+
+  // Monitor changes in fields that affect user code generation
+  useEffect(() => {
+    // Only regenerate user code if we have the required fields
+    if (formData.firstName && formData.surname && formData.phone && formData.category) {
+      const newUserCode = generateUserCode(
+        formData.firstName,
+        formData.surname,
+        formData.phone,
+        formData.category as 'admin' | 'vendor'
+      );
+
+      // Only update if the generated code is different from current
+      if (newUserCode !== formData.userCode) {
+        setFormData(prev => ({
+          ...prev,
+          userCode: newUserCode
+        }));
+      }
+    }
+  }, [formData.category, formData.firstName, formData.surname, formData.phone]);
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -393,6 +437,13 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
 
     // Prevent form submission if vendor job work operations are in progress
     if (isVendorJobWorkOperationInProgress) {
+      return;
+    }
+
+    // Validate phone number before submission
+    const phoneValidationError = validatePhoneNumber(formData.phone);
+    if (phoneValidationError) {
+      setPhoneError(phoneValidationError);
       return;
     }
 
@@ -950,15 +1001,35 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
                           <label htmlFor="phone" className="block text-sm font-medium text-blue-700">
                             Phone Number
                           </label>
-                          <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            required
-                            value={formData.phone}
-                            onChange={handleChange}
-                            className="mt-1 block w-full py-2 px-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                          />
+                          <div className="mt-1 relative">
+                            <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                            <input
+                              type="tel"
+                              id="phone"
+                              name="phone"
+                              maxLength={10}
+                              required
+                              value={formData.phone}
+                              onChange={(e) => {
+                                const numeric = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                                setFormData(prev => ({ ...prev, phone: numeric }));
+                                setPhoneError(validatePhoneRealTime(numeric));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === ' ' || e.key === 'Tab') {
+                                  e.preventDefault();
+                                }
+                              }}
+                              className={`appearance-none block w-full pl-10 pr-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${phoneError ? 'border-red-500 bg-red-50' : (formData.phone && isValidPhoneNumber(formData.phone) ? 'border-green-500 bg-green-50' : 'border-blue-300')}`}
+                              placeholder="Enter phone number"
+                            />
+                            {phoneError && (
+                              <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+                            )}
+                            {!phoneError && formData.phone.length === 10 && isValidPhoneNumber(formData.phone) && (
+                              <p className="mt-1 text-sm text-green-600">✓ Valid phone number</p>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <label htmlFor="email" className="block text-sm font-medium text-blue-700">
@@ -996,7 +1067,6 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
                               type="text"
                               id="companyName"
                               name="companyName"
-                              required
                               value={formData.companyName}
                               onChange={handleChange}
                               className="mt-1 block w-full py-2 px-3 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -1308,9 +1378,8 @@ export default function EditUser({ params }: { params: Promise<{ id: string }> }
                                 }
                               }}
                               disabled={!formData.address.state}
-                              className={`mt-1 block w-full py-2 px-3 pr-10 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                                !formData.address.state ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
-                              }`}
+                              className={`mt-1 block w-full py-2 px-3 pr-10 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${!formData.address.state ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                                }`}
                               placeholder={!formData.address.state ? 'Select State First' : 'Type to search districts...'}
                             />
                             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
